@@ -115,8 +115,8 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
   <input id="fUstazNew" placeholder="Nama ustaz / penceramah baru" style="display:none;margin-top:6px">
   <div class="row">
     <div><label>Waktu</label><select id="fWaktu"></select></div>
-    <div><label>Mula (jam)</label><input type="time" id="fStart"></div>
-    <div><label>Tempoh (min)</label><input type="number" id="fDur" min="15" step="5"></div>
+    <div style="display:none"><label>Mula (jam)</label><input type="time" id="fStart"></div>
+    <div style="display:none"><label>Tempoh (min)</label><input type="number" id="fDur" min="15" step="5"></div>
   </div>
   <div id="customWaktuBox" style="display:none"><label>Nama waktu</label><input id="fWaktuCustom" placeholder="cth: Selepas Zohor"></div>
   <label>Warna</label><input type="color" id="fColor">
@@ -139,7 +139,7 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
     <button class="btn" id="evSave">Simpan</button>
     <button class="btn sec" id="evCancel">Batal</button>
     <button class="btn del" id="evDel">Padam</button>
-    <a class="btn g" id="evGcal" target="_blank" rel="noopener">+ Google Calendar</a>
+    <a class="btn g" id="evGcal" hidden style="display:none!important" target="_blank" rel="noopener">+ Google Calendar</a>
   </div>
 </div></div>
 
@@ -294,7 +294,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.5.1 (21 Nov 2026)";
+const VER="1.5.2 (21 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -473,7 +473,7 @@ function openEvent(ev,date){
   $("fCancel").checked=!!(ev&&ev.cancelled);$("fReason").value=(ev&&ev.reason)||"";
   $("cancelBox").style.display=ev?"block":"none";$("cancelMore").style.display=$("fCancel").checked?"block":"none";
   $("fRepeat").value="";$("repBox").style.display=ev?"none":"block";
-  $("evDel").style.display=ev?"inline-block":"none";$("evGcal").style.display=ev?"inline-block":"none";
+  $("evDel").style.display=ev?"inline-block":"none";
   if(ev){gcalLink();noticeLink();}
   open("evDlg");
 }
