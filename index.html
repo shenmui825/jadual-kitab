@@ -294,7 +294,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.5.2 (21 Nov 2026)";
+const VER="1.6.0 (22 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -304,7 +304,7 @@ function markBackup(){const m=getMeta();m.backup=Date.now();setMeta(m);render();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}const m=getMeta();m.changed=Date.now();if(!m.first)m.first=m.changed;setMeta(m);}
 /* ---------- Sandaran Google Drive ----------
    Pembangun: isi clientId (dan e-mel sendiri untuk dikongsi, baca sahaja). Jika clientId kosong, ciri ini disembunyikan. */
-const GDRIVE={clientId:"",devEmail:""};
+const GDRIVE={clientId:"1081778761403-q46ueakjdn44odl0bia7mks93a6cl4jn.apps.googleusercontent.com",devEmail:"shenmuius@gmail.com"};
 const GFILE="Jadual Kitab - Sandaran.json";
 let gTok=null,gTokExp=0;
 const gEnabled=()=>!!GDRIVE.clientId;
