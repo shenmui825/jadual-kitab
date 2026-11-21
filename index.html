@@ -294,7 +294,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.6.0 (22 Nov 2026)";
+const VER="1.7.0 (22 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -785,6 +785,34 @@ window.addEventListener("resize",()=>{if(!S.settings.view)render();});
 // buka bulan terdekat yang ada data jika bulan semasa kosong
 (function(){const k=vy+"-"+pad(vm+1)+"-";if(!S.events.some(e=>e.date.startsWith(k))&&S.events.length){const ds=S.events.map(e=>e.date).sort();const t=toYmd(new Date());const pick=ds.find(d=>d>=t)||ds[ds.length-1];const p=parse(pick);vy=p.getFullYear();vm=p.getMonth();}})();
 render();
+
+/* semakan versi baru */
+(function(){
+  if(!location.protocol.startsWith("http"))return;
+  let bar=null;
+  function show(v){
+    if(bar)return;
+    bar=document.createElement("div");
+    bar.style.cssText="position:fixed;left:0;right:0;top:0;z-index:9999;background:#0d2a63;color:#fff;padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:center;font:600 14px system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3)";
+    const t=document.createElement("span");t.textContent="Versi baru tersedia ("+v+")";
+    const b=document.createElement("button");b.textContent="Kemas kini";
+    b.style.cssText="background:#fff;color:#0d2a63;border:0;border-radius:8px;padding:6px 12px;font-weight:700";
+    b.onclick=async()=>{try{const k=await caches.keys();await Promise.all(k.map(x=>caches.delete(x)));const r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(x=>x.update()));}catch(e){}location.reload();};
+    const x=document.createElement("button");x.textContent="\u2715";x.setAttribute("aria-label","Tutup");
+    x.style.cssText="background:transparent;color:#fff;border:0;font-size:16px";x.onclick=()=>{bar.remove();bar=null;};
+    bar.append(t,b,x);document.body.appendChild(bar);
+  }
+  async function check(){
+    try{
+      const r=await fetch("index.html?v="+Date.now(),{cache:"no-store"});
+      if(!r.ok)return;
+      const m=(await r.text()).match(/const VER="([^"]*)"/);
+      if(m&&m[1]!==VER)show(m[1]);
+    }catch(e){}
+  }
+  setTimeout(check,2500);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")check();});
+})();
 if("serviceWorker" in navigator&&location.protocol.startsWith("http")){navigator.serviceWorker.register("sw.js").catch(()=>{});}
 </script>
 </body>
