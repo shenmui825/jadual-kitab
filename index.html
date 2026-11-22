@@ -50,6 +50,20 @@ main{padding:10px 12px 90px;max-width:1280px;margin:0 auto}
 .ev .w{margin-left:auto;text-align:right;font-size:13px;white-space:nowrap}
 .empty{padding:30px;text-align:center;color:var(--mut)}
 .fab{position:fixed;right:16px;bottom:16px;z-index:15;border:0;background:#f5c542;color:#2b2200;font-weight:700;border-radius:999px;padding:14px 20px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.spc{font-size:9px;font-weight:700;text-align:center;border-radius:3px;padding:1px 2px;line-height:1.25}
+@media(min-width:720px){.spc{font-size:11px;padding:2px 3px}}
+.spl{padding:5px 12px;font-weight:700;font-size:13px}
+.rem{background:#fff3cd;border:1px solid #e6c34a;color:#5a4500;border-radius:10px;padding:8px 10px;margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rem span{flex:1;min-width:150px;font-weight:600;font-size:14px}
+.rem button{border:0;border-radius:8px;padding:7px 10px;font-weight:700;background:#0d2a63;color:#fff}
+.rem button#remX{background:transparent;color:#5a4500;padding:7px 4px}
+.flt{display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.flt select{flex:1;min-width:120px;padding:7px;font-size:13px}
+.flt button{border:0;background:#e3ecee;border-radius:8px;padding:8px 10px;font-weight:600}
+.flt small{flex-basis:100%;color:var(--mut);font-size:11px}
+.thr{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.thc{border:3px solid transparent;border-radius:10px;color:#fff;font-weight:700;font-size:12px;padding:10px 12px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.thc.on{border-color:#f5c542}
 /* dialogs */
 .back{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:none;align-items:flex-end;justify-content:center}
 .back.on{display:flex}
@@ -147,10 +161,34 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
 <div class="back" id="menuDlg"><div class="sheet menu">
   <h2>Menu</h2>
   <button class="btn" data-act="img">🖼️ Jana gambar jadual<small>JPG seperti poster, sedia kongsi di WhatsApp</small></button>
+  <button class="btn" data-act="week">📅 Gambar jadual minggu ini<small>7 hari dari hari ini, untuk peringatan mingguan</small></button>
   <button class="btn" data-act="copy">📋 Salin bulan ini ke bulan depan<small>Ikut susunan hari minggu, kemudian edit yang berubah</small></button>
+  <button class="btn" data-act="nota">📝 Nota bulan ini<small>Pengumuman kecil di bawah jadual pada gambar</small></button>
+  <button class="btn" data-act="khas">⭐ Tanda hari khas<small>Maulidur Rasul, Isra' Mikraj dan lain-lain</small></button>
     <button class="btn" data-act="catalog">📚 Urus senarai kitab &amp; ustaz<small>Tambah atau buang kitab dan penceramah</small></button>
   <button class="btn" data-act="settings">⚙️ Tetapan<small>Nama surau, tajuk, footer, tarikh Hijrah</small></button>
   <div class="btns"><button class="btn sec" data-act="close">Tutup</button></div>
+</div></div>
+
+<!-- nota -->
+<div class="back" id="notaDlg"><div class="sheet">
+  <h2 id="notaTitle">Nota bulanan</h2>
+  <textarea id="nNota" rows="5" placeholder="Cth: Kuliah Subuh dan Maghrib ditiadakan semasa cuti sekolah. Sila bawa sejadah sendiri."></textarea>
+  <p class="note">Nota ini dicetak di bawah jadual pada gambar bulan ini sahaja. Kosongkan jika tiada.</p>
+  <div class="btns"><button class="btn" id="nSave">Simpan</button><button class="btn sec" data-close="notaDlg">Batal</button></div>
+</div></div>
+
+<!-- hari khas -->
+<div class="back" id="khasDlg"><div class="sheet">
+  <h2 id="khasTitle">Hari khas</h2>
+  <div id="khList"></div>
+  <label>Tarikh</label><input type="date" id="khDate">
+  <label>Nama acara</label><input id="khLabel" list="khOpts" placeholder="Cth: Maulidur Rasul">
+  <datalist id="khOpts"><option>Maulidur Rasul</option><option>Isra' Mikraj</option><option>Nisfu Syaaban</option><option>Awal Ramadan</option><option>Nuzul Quran</option><option>Aidilfitri</option><option>Aidiladha</option><option>Awal Muharram</option><option>Cuti Umum</option></datalist>
+  <label>Warna</label>
+  <select id="khColor"><option value="#e0a800">Emas</option><option value="#c0392b">Merah</option><option value="#1e8449">Hijau</option><option value="#70309e">Ungu</option></select>
+  <div class="btns"><button class="btn" id="khAdd">+ Tambah</button><button class="btn sec" data-close="khasDlg">Tutup</button></div>
+  <p class="note">Hari khas ditunjuk dengan label berwarna pada kalendar dan gambar jadual.</p>
 </div></div>
 
 <!-- catalog -->
@@ -181,6 +219,7 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
   </div>
   <div id="driveBox" style="display:none;margin-top:14px">
     <label>Sandaran Google Drive</label>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:13px;margin:4px 0"><input type="checkbox" id="sAuto" style="width:auto"> Sandar automatik selepas setiap perubahan</label>
     <p class="note" id="driveNote"></p>
     <div class="btns" style="margin-top:6px"><button class="btn g" id="driveNow">Sandar sekarang</button><button class="btn g" id="driveRestore">Pulihkan dari Drive</button></div>
   </div>
@@ -216,6 +255,7 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
 <div class="back" id="imgDlg"><div class="sheet" id="imgwrap">
   <h2>Gambar jadual</h2>
   <img id="outImg" alt="Jadual">
+  <label>Tema</label><div id="thRow" class="thr"></div>
   <p class="note">Jika butang muat turun tidak berfungsi, tekan lama pada gambar lalu pilih Simpan.</p>
   <div class="btns">
     <button class="btn" id="imgDown">Muat turun JPG</button>
@@ -267,7 +307,7 @@ const DEF_SETTINGS={
   surau1:"SURAU AL-IBTIDA'IYAH",surau2:"BATU 6 BANGI",tajuk:"JADUAL PENGAJIAN KITAB",
   footL:"ILMU AMAL IKHLAS",footR0:"Sumbangan boleh disalurkan ke:",footR1:"NO. AKAUN: 12029010014953",footR2:"Pengerusi: 0132280670   SU: 01110842854   Bendahari: 0169969036",
   times:{Subuh:"05:45",Zohor:"13:15",Asar:"16:30",Maghrib:"19:10",Isyak:"20:20","3 Petang":"15:00"},
-  hijri:0,view:""
+  hijri:0,view:"",autoDrive:false
 };
 const WAKTU=["Subuh","Zohor","Asar","Maghrib","Isyak","3 Petang"];
 const SWATCH=["#012060","#385723","#70309e","#d8068b","#06b1f6","#92d14f","#fed966","#fffe00","#c0392b","#e67e22","#16a085","#555555"];
@@ -276,13 +316,14 @@ const HARI3=["Isn","Sel","Rab","Kha","Jum","Sab","Ahd"];
 const BULAN=["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
 const HBULAN=["MUHARRAM","SAFAR","R_AWAL","R_AKHIR","J_AWAL","J_AKHIR","REJAB","SYAABAN","RAMADAN","SYAWAL","ZULKAEDAH","ZULHIJJAH"];
 const KEY="jadualKitabV1";
+function nowD(){try{const p=new URLSearchParams(location.search).get("hari");if(p){const a=p.split("-").map(Number);return new Date(a[0],a[1]-1,a[2]);}}catch(e){}return new Date();}
 
 /* ---------- State ---------- */
 let S=load();
 let vy,vm;
-{const t=new Date();vy=t.getFullYear();vm=t.getMonth();}
+{const t=nowD();vy=t.getFullYear();vm=t.getMonth();}
 function ensureCatalog(o){
-  const c=o.catalog=o.catalog||{kitab:[],ustaz:[]};c.kitab=c.kitab||[];c.ustaz=c.ustaz||[];
+  o.notes=o.notes||{};o.special=o.special||{};const c=o.catalog=o.catalog||{kitab:[],ustaz:[]};c.kitab=c.kitab||[];c.ustaz=c.ustaz||[];
   o.events.forEach(e=>{
     if(e.title&&!c.kitab.some(k=>k.title===e.title))c.kitab.push({title:e.title,ustaz:e.ustaz||"",waktu:e.waktu||"Maghrib",color:e.color||"#0d2a63"});
     if(e.ustaz&&!c.ustaz.includes(e.ustaz))c.ustaz.push(e.ustaz);
@@ -291,17 +332,17 @@ function ensureCatalog(o){
   return o;
 }
 function load(){
-  try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
+  try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.7.1 (22 Nov 2026)";
+const VER="1.8.0 (22 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
 function getMeta(){try{return JSON.parse(localStorage.getItem(KEY+"Meta")||"{}");}catch(e){return {};}}
 function setMeta(m){try{localStorage.setItem(KEY+"Meta",JSON.stringify(m));}catch(e){}}
 function markBackup(){const m=getMeta();m.backup=Date.now();setMeta(m);render();}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}const m=getMeta();m.changed=Date.now();if(!m.first)m.first=m.changed;setMeta(m);}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}const m=getMeta();m.changed=Date.now();if(!m.first)m.first=m.changed;setMeta(m);autoBackupSoon();}
 /* ---------- Sandaran Google Drive ----------
    Pembangun: isi clientId (dan e-mel sendiri untuk dikongsi, baca sahaja). Jika clientId kosong, ciri ini disembunyikan. */
 const GDRIVE={clientId:"1081778761403-q46ueakjdn44odl0bia7mks93a6cl4jn.apps.googleusercontent.com",devEmail:"shenmuius@gmail.com"};
@@ -396,7 +437,7 @@ function render(){
   $("hTitle").textContent=titleFor();document.title=titleFor();
   const view=S.settings.view||(window.innerWidth<720?"list":"grid");
   $("tabList").classList.toggle("on",view==="list");$("tabGrid").classList.toggle("on",view==="grid");
-  const map=byDate(),today=toYmd(new Date());
+  const map=filtMap(byDate()),today=toYmd(nowD()),sp=S.special||{};
   const dim=new Date(vy,vm+1,0).getDate();
   let h="";
   if(view==="grid"){
@@ -407,21 +448,41 @@ function render(){
       const d=i-lead+1;
       if(d<1||d>dim){h+='<div class="cell out"></div>';continue;}
       const ds=ymd(vy,vm,d),dt=new Date(vy,vm,d),evs=map[ds]||[];
-      h+='<div class="cell'+(ds===today?" today":"")+'" data-date="'+ds+'"><div class="dn">'+d+'<small>'+hText(dt)+'</small></div>'+
+      h+='<div class="cell'+(ds===today?" today":"")+'" data-date="'+ds+'"><div class="dn">'+d+'<small>'+hText(dt)+'</small></div>'+spHtml(sp[ds])+
         evs.map(e=>e.cancelled?'<button class="chip x" data-id="'+e.id+'"><span class="cb">DITANGGUHKAN</span><b class="tt">'+esc(e.title)+'</b>'+(e.reason?'<i>'+esc(e.reason)+'</i>':'')+'</button>':'<button class="chip" data-id="'+e.id+'" style="background:'+e.color+';color:'+ink(e.color)+'"><b>'+esc(e.title)+'</b>'+(e.ustaz?'<i>'+esc(e.ustaz)+'</i>':'')+'<i><b style="display:inline">('+esc(waktuText(e))+')</b></i></button>').join("")+'</div>';
     }
     h+="</div>";
   }else{
     let any=false;
     for(let d=1;d<=dim;d++){
-      const ds=ymd(vy,vm,d),evs=map[ds];if(!evs)continue;any=true;
+      const ds=ymd(vy,vm,d),evs=map[ds];if(!evs&&!sp[ds])continue;any=true;
       const dt=new Date(vy,vm,d);
-      h+='<div class="day'+(ds===today?" today":"")+'"><h3>'+HARI[dt.getDay()]+", "+d+" "+BULAN[vm]+'<span>'+hText(dt)+'</span></h3>'+
-      evs.map(e=>'<div class="ev'+(e.cancelled?' x':'')+'" data-id="'+e.id+'"><div class="bar" style="background:'+(e.cancelled?'#b0b4bb':e.color)+'"></div><div><div class="t">'+esc(e.title)+'</div>'+(e.ustaz?'<div class="u">'+esc(e.ustaz)+'</div>':'')+(e.cancelled?'<div class="cx">DITANGGUHKAN'+(e.reason?' · '+esc(e.reason):'')+'</div>':'')+'</div><div class="w"><b>'+esc(waktuText(e))+'</b></div></div>').join("")+'</div>';
+      h+='<div class="day'+(ds===today?" today":"")+'"><h3>'+HARI[dt.getDay()]+", "+d+" "+BULAN[vm]+'<span>'+hText(dt)+'</span></h3>'+(sp[ds]?'<div class="spl" style="background:'+sp[ds].color+';color:'+ink(sp[ds].color)+'">⭐ '+esc(sp[ds].label)+'</div>':'')+
+      (evs||[]).map(e=>'<div class="ev'+(e.cancelled?' x':'')+'" data-id="'+e.id+'"><div class="bar" style="background:'+(e.cancelled?'#b0b4bb':e.color)+'"></div><div><div class="t">'+esc(e.title)+'</div>'+(e.ustaz?'<div class="u">'+esc(e.ustaz)+'</div>':'')+(e.cancelled?'<div class="cx">DITANGGUHKAN'+(e.reason?' · '+esc(e.reason):'')+'</div>':'')+'</div><div class="w"><b>'+esc(waktuText(e))+'</b></div></div>').join("")+'</div>';
     }
     if(!any)h='<div class="empty">Tiada kuliah bulan ini.<br>Tekan “+ Tambah kuliah” atau “Salin bulan ini ke bulan depan” di menu.</div>';
   }
-  $("main").innerHTML=backupBanner()+h;
+  $("main").innerHTML=reminderBar()+backupBanner()+filterBar()+h;
+}
+function spHtml(s){return s?'<div class="spc" style="background:'+s.color+';color:'+ink(s.color)+'">'+esc(s.label)+'</div>':"";}
+let FK="",FU="",remOff=false;
+function filtMap(map){
+  if(!FK&&!FU)return map;const o={};
+  Object.keys(map).forEach(k=>{const a=map[k].filter(e=>(!FK||e.title===FK)&&(!FU||e.ustaz===FU));if(a.length)o[k]=a;});return o;
+}
+function filterBar(){
+  const c=S.catalog;if(c.kitab.length<2&&c.ustaz.length<2)return "";
+  const opt=(arr,cur,all)=>'<option value="">'+all+'</option>'+arr.map(x=>'<option value="'+esc(x)+'"'+(x===cur?" selected":"")+'>'+esc(x)+'</option>').join("");
+  return '<div class="flt"><select id="flK">'+opt(c.kitab.map(k=>k.title),FK,"Semua kitab")+'</select><select id="flU">'+opt(c.ustaz,FU,"Semua ustaz")+'</select>'+((FK||FU)?'<button id="flX">Kosongkan</button><small>Penapis hanya untuk paparan. Gambar jadual tidak terjejas.</small>':'')+'</div>';
+}
+function reminderBar(){
+  if(remOff)return "";
+  const t=nowD(),y=t.getFullYear(),m=t.getMonth(),dim=new Date(y,m+1,0).getDate();
+  if(t.getDate()<dim-6)return "";
+  let ny=y,nm=m+1;if(nm>11){nm=0;ny++;}
+  const has=(yy,mm)=>S.events.some(e=>e.date.startsWith(yy+"-"+pad(mm+1)+"-"));
+  if(!has(y,m)||has(ny,nm))return "";
+  return '<div class="rem"><span>📅 Jadual '+BULAN[nm]+' '+ny+' belum disediakan.</span><button id="remCopy">Salin dari '+BULAN[m]+'</button><button id="remX" aria-label="Tutup">✕</button></div>';
 }
 const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -556,11 +617,16 @@ $("cuAdd").onclick=()=>{
 /* ---------- Main interactions ---------- */
 $("main").onclick=e=>{
   if(e.target.closest("#bkBtn")){driveBackupNow();return;}
+  if(e.target.closest("#remX")){remOff=true;render();return;}
+  if(e.target.closest("#remCopy")){const t=nowD();vy=t.getFullYear();vm=t.getMonth();copyMonth();return;}
+  if(e.target.closest("#flX")){FK="";FU="";render();return;}
+  if(e.target.closest(".flt")||e.target.closest(".rem"))return;
   const c=e.target.closest("[data-id]");
   if(c){openEvent(S.events.find(x=>x.id===c.dataset.id));return;}
   const cell=e.target.closest(".cell[data-date]");
   if(cell)openEvent(null,cell.dataset.date);
 };
+$("main").onchange=e=>{if(e.target.id==="flK"){FK=e.target.value;render();}else if(e.target.id==="flU"){FU=e.target.value;render();}};
 $("addBtn").onclick=()=>{const t=new Date();openEvent(null,(t.getFullYear()===vy&&t.getMonth()===vm)?toYmd(t):ymd(vy,vm,1));};
 $("prev").onclick=()=>{vm--;if(vm<0){vm=11;vy--;}render();};
 $("next").onclick=()=>{vm++;if(vm>11){vm=0;vy++;}render();};
@@ -570,11 +636,48 @@ $("menuBtn").onclick=()=>open("menuDlg");
 document.querySelectorAll(".menu [data-act]").forEach(b=>b.onclick=()=>{
   close("menuDlg");const a=b.dataset.act;
   if(a==="img")makeImage();
+  else if(a==="week")makeWeekImage();
   else if(a==="copy")copyMonth();
+  else if(a==="nota")openNota();
+  else if(a==="khas")openKhas();
   else if(a==="backup"){$("bakText").value=JSON.stringify(S);open("bakDlg");}
   else if(a==="catalog")openCatalog();
   else if(a==="settings")openSettings();
 });
+
+/* ---------- Nota bulanan ---------- */
+const monKey=()=>vy+"-"+pad(vm+1);
+function openNota(){$("notaTitle").textContent="Nota "+BULAN[vm]+" "+vy;$("nNota").value=(S.notes||{})[monKey()]||"";open("notaDlg");}
+$("nSave").onclick=()=>{const v=$("nNota").value.trim();S.notes=S.notes||{};if(v)S.notes[monKey()]=v;else delete S.notes[monKey()];save();close("notaDlg");toast(v?"Nota disimpan":"Nota dikosongkan");};
+
+/* ---------- Hari khas ---------- */
+function renderKhas(){
+  const sp=S.special||{},pre=monKey()+"-";
+  const ks=Object.keys(sp).filter(k=>k.startsWith(pre)).sort();
+  $("khList").innerHTML=ks.map(k=>{const d=parse(k);return '<div class="cl"><span class="dot" style="background:'+sp[k].color+'"></span><div class="nm">'+esc(sp[k].label)+'<small>'+HARI[d.getDay()]+", "+d.getDate()+" "+BULAN[d.getMonth()]+'</small></div><button data-dk="'+k+'" aria-label="Buang">✕</button></div>';}).join("")||'<p class="note">Tiada hari khas bagi '+BULAN[vm]+' '+vy+'.</p>';
+}
+function openKhas(){
+  $("khasTitle").textContent="Hari khas "+BULAN[vm]+" "+vy;
+  const t=nowD();$("khDate").value=(t.getFullYear()===vy&&t.getMonth()===vm)?toYmd(t):ymd(vy,vm,1);$("khLabel").value="";
+  renderKhas();open("khasDlg");
+}
+$("khList").onclick=e=>{const k=e.target.dataset&&e.target.dataset.dk;if(!k)return;delete S.special[k];save();renderKhas();render();};
+$("khAdd").onclick=()=>{
+  const d=$("khDate").value,l=$("khLabel").value.trim();
+  if(!d){toast("Pilih tarikh");return;}if(!l){toast("Isi nama acara");return;}
+  S.special=S.special||{};S.special[d]={label:l,color:$("khColor").value};
+  const nd=parse(d);vy=nd.getFullYear();vm=nd.getMonth();
+  save();$("khLabel").value="";renderKhas();render();toast("Hari khas ditambah");
+};
+
+/* ---------- Sandaran automatik ---------- */
+let abT=null;
+function drivePending(){const m=getMeta();return !!m.changed&&!(m.drive&&m.drive>=m.changed);}
+function autoBackupSoon(){
+  if(!gEnabled()||!S.settings.autoDrive)return;
+  clearTimeout(abT);
+  abT=setTimeout(async()=>{if(!drivePending())return;try{await gBackup();render();}catch(e){LASTERR="auto: "+e.message;}},15000);
+}
 
 /* ---------- Copy month ---------- */
 async function copyMonth(){
@@ -620,7 +723,7 @@ $("bakShare").onclick=()=>{share(new File([JSON.stringify(S,null,1)],"jadual-kit
 $("bakCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("bakText").value);toast("Disalin");markBackup();}catch(e){toast("Gagal menyalin");}};
 function restore(txt){
   try{const o=JSON.parse(txt);if(!Array.isArray(o.events))throw 0;
-    S=ensureCatalog({events:o.events,catalog:o.catalog,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});
+    S=ensureCatalog({events:o.events,catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});
     save();close("bakDlg");render();toast("Data dipulihkan");}catch(e){toast("Data tidak sah");}
 }
 $("bakLoad").onclick=()=>restore($("bakText").value);
@@ -629,14 +732,14 @@ $("bakFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new Fil
 /* ---------- Settings ---------- */
 function openSettings(){
   const s=S.settings;$("sSurau1").value=s.surau1;$("sSurau2").value=s.surau2;$("sTajuk").value=s.tajuk;$("sFootL").value=s.footL;$("sFootR0").value=s.footR0;$("sFootR1").value=s.footR1;$("sFootR2").value=s.footR2;
-  $("sHijri").value=s.hijri;$("verInfo").textContent="Versi "+VER;
+  $("sHijri").value=s.hijri;$("sAuto").checked=!!s.autoDrive;$("verInfo").textContent="Versi "+VER;
   $("driveBox").style.display=gEnabled()?"block":"none";
   if(gEnabled()){const m=getMeta();$("driveNote").textContent="Salinan jadual disimpan dalam Google Drive anda (fail “"+GFILE+"”)"+(GDRIVE.devEmail?" dan dikongsi, baca sahaja, dengan pembangun app ("+GDRIVE.devEmail+") untuk bantuan jika ada masalah. ":". ")+(m.drive?"Sandaran terakhir: "+new Date(m.drive).toLocaleString("ms-MY")+".":"Belum pernah disandarkan.");}$("devBox").style.display="none";open("setDlg");
 }
 $("setSave").onclick=()=>{$("devBox").style.display="none";
   const s=S.settings;s.surau1=$("sSurau1").value;s.surau2=$("sSurau2").value;s.tajuk=$("sTajuk").value||DEF_SETTINGS.tajuk;s.footL=$("sFootL").value;s.footR0=$("sFootR0").value;s.footR1=$("sFootR1").value;s.footR2=$("sFootR2").value;
-  s.hijri=+$("sHijri").value||0;
-  save();close("setDlg");render();toast("Tetapan disimpan");
+  s.hijri=+$("sHijri").value||0;const wasAuto=!!s.autoDrive;s.autoDrive=$("sAuto").checked&&gEnabled();
+  save();close("setDlg");render();toast("Tetapan disimpan");if(s.autoDrive&&!wasAuto)driveBackupNow();
 };
 $("setCancel").onclick=()=>close("setDlg");
 function infoText(){
@@ -671,18 +774,40 @@ function rosette(ctx,cx,cy,r,rot){
   petals(r,rot||0);petals(r*.62,(rot||0)+Math.PI/8);
   ctx.beginPath();ctx.arc(cx,cy,r*.2,0,Math.PI*2);ctx.stroke();
 }
+const THEMES=[
+ {id:"teal",name:"Teal",g:["#1b6475","#3b9fae","#2a8a9c","#0d596e"],glow:"130,205,210",l:"3,52,76",acc:"#ffff00",band:"#4473c1",s1:"#cfd5eb",s2:"#e9ecf5"},
+ {id:"biru",name:"Biru",g:["#123a73","#2f6fbf","#1f55a0","#0b2a5c"],glow:"140,190,240",l:"2,20,60",acc:"#ffe45c",band:"#8fb8e8",s1:"#d3e2f5",s2:"#eef3fa"},
+ {id:"hijau",name:"Hijau",g:["#14532d","#2f8f57","#1f7a45","#0b3d20"],glow:"150,220,170",l:"2,40,20",acc:"#fff27a",band:"#9bd39a",s1:"#d4e8d2",s2:"#eef6ec"},
+ {id:"ungu",name:"Ungu",g:["#3d1f6e","#7b4fb8","#6638a6","#2a1450"],glow:"190,160,235",l:"30,10,60",acc:"#ffe86b",band:"#c3a8e6",s1:"#e0d6f0",s2:"#f3eef9"},
+ {id:"merah",name:"Maroon",g:["#6e1a26","#b5414f","#9a2f3d","#4d0e18"],glow:"240,170,170",l:"50,5,15",acc:"#ffe08a",band:"#e8c36a",s1:"#f1dcd0",s2:"#f9efe9"},
+ {id:"jingga",name:"Jingga",g:["#a8430f","#e8832f","#d46a1c","#7a2d06"],glow:"255,205,150",l:"70,25,0",acc:"#fff3a0",band:"#f4c58a",s1:"#f6dcc2",s2:"#fbf0e4"},
+ {id:"rose",name:"Rose",g:["#a8325e","#e0709a","#cc5583","#7a1f45"],glow:"255,200,220",l:"80,10,40",acc:"#fff1b0",band:"#f2b1cb",s1:"#f6d6e2",s2:"#fbeef3"},
+ {id:"arang",name:"Arang",g:["#1f2326","#4a525a","#383e44","#121416"],glow:"170,180,190",l:"0,0,0",acc:"#ffd54a",band:"#d9b95b",s1:"#dcdfe3",s2:"#eff1f3"},
+ {id:"coklat",name:"Coklat",g:["#4a2c17","#8d5a34","#744522","#2e1809"],glow:"230,190,150",l:"30,12,0",acc:"#ffe29a",band:"#d8b48a",s1:"#eadccb",s2:"#f6efe6"},
+ {id:"zaitun",name:"Zaitun",g:["#4b5320","#8a9a3b","#6f7e2a","#2f3412"],glow:"215,225,150",l:"25,30,0",acc:"#fff3a0",band:"#c8d38a",s1:"#e3e8c8",s2:"#f3f5e6"},
+ {id:"emas",name:"Emas",g:["#b8860b","#e8c04a","#d4a52a","#8a6208"],glow:"255,235,170",l:"90,60,0",acc:"#2b1a00",band:"#f3dd8f",s1:"#f3e6bf",s2:"#faf5e4"},
+ {id:"nila",name:"Nila",g:["#232a6b","#4a56b8","#3a44a0","#141840"],glow:"170,180,240",l:"10,10,50",acc:"#ffd9a0",band:"#aab3ee",s1:"#d6daf3",s2:"#eceefa"}
+];
+const TH=()=>THEMES.find(t=>t.id===S.settings.theme)||THEMES[0];
+let lastKind="month";
+function renderThemes(){
+  const cur=TH().id;
+  $("thRow").innerHTML=THEMES.map(t=>'<button type="button" class="thc'+(t.id===cur?' on':'')+'" data-th="'+t.id+'" style="background:linear-gradient(135deg,'+t.g[0]+','+t.g[1]+')">'+t.name+'</button>').join("");
+}
+$("thRow").onclick=e=>{const id=e.target.dataset&&e.target.dataset.th;if(!id)return;S.settings.theme=id;save();if(lastKind==="week")makeWeekImage();else makeImage();};
 function drawBackground(ctx,W,H){
-  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,"#1b6475");g.addColorStop(.38,"#3b9fae");g.addColorStop(.72,"#2a8a9c");g.addColorStop(1,"#0d596e");
+  const th=TH();
+  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,th.g[0]);g.addColorStop(.38,th.g[1]);g.addColorStop(.72,th.g[2]);g.addColorStop(1,th.g[3]);
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  const rg=ctx.createRadialGradient(W*.22,H*.5,10,W*.22,H*.5,W*.55);rg.addColorStop(0,"rgba(130,205,210,.40)");rg.addColorStop(1,"rgba(130,205,210,0)");ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
-  ctx.save();ctx.strokeStyle="rgba(3,52,76,.26)";ctx.lineWidth=2;
+  const rg=ctx.createRadialGradient(W*.22,H*.5,10,W*.22,H*.5,W*.55);rg.addColorStop(0,"rgba("+th.glow+",.40)");rg.addColorStop(1,"rgba("+th.glow+",0)");ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.strokeStyle="rgba("+th.l+",.26)";ctx.lineWidth=2;
   const R=104,dy=R*Math.sqrt(3)/2;
   for(let j=-1;j*dy<H+R;j++)for(let i=-1;i*R<W+R;i++){ctx.beginPath();ctx.arc(i*R+(j&1?R/2:0),j*dy,R,0,Math.PI*2);ctx.stroke();}
-  ctx.strokeStyle="rgba(3,52,76,.62)";ctx.lineWidth=1.8;
+  ctx.strokeStyle="rgba("+th.l+",.62)";ctx.lineWidth=1.8;
   for(let x=560;x<W+60;x+=86)rosette(ctx,x,4,40,Math.PI/8);
   for(let x=330;x<800;x+=86)rosette(ctx,x,H-14,38,Math.PI/8);
   rosette(ctx,150,H-6,44,0);
-  ctx.fillStyle="rgba(3,52,76,.55)";[[48,92],[330,72],[960,150],[1240,300],[760,H-50]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle="rgba("+th.l+",.55)";[[48,92],[330,72],[960,150],[1240,300],[760,H-50]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();});
   ctx.restore();
 }
 function drawCancelled(ctx,b,x,by,bh,cw){
@@ -699,7 +824,7 @@ function drawCancelled(ctx,b,x,by,bh,cw){
   ctx.fillStyle="#a00000";ctx.font="11.5px "+FC;b.rl.forEach(l=>{ctx.fillText(l,tx,ty);ty+=14;});
 }
 async function makeImage(){
-  await ensureFonts();const logo=await loadLogo();
+  lastKind="month";renderThemes();await ensureFonts();const logo=await loadLogo();const th=TH();
   const W=1280,SC=2,M=25,CW=(W-2*M)/7,map=byDate();
   const dim=new Date(vy,vm+1,0).getDate(),lead=(new Date(vy,vm,1).getDay()+6)%7,rows=Math.ceil((lead+dim)/7);
   const meas=document.createElement("canvas").getContext("2d");
@@ -708,18 +833,20 @@ async function makeImage(){
     let mx=66;const rc=[];
     for(let c=0;c<7;c++){
       const d=r*7+c-lead+1;const evs=(d>=1&&d<=dim)?(map[ymd(vy,vm,d)]||[]):[];
-      let sum=0;const boxes=evs.map(e=>{
+      const spd=(d>=1&&d<=dim)&&(S.special||{})[ymd(vy,vm,d)];let sum=spd?17:0;const boxes=evs.map(e=>{
         const wm=e.cancelled?CW-20:CW-14;
         meas.font="bold 13px "+FC;const tl=wrap(meas,e.title.toUpperCase(),wm);
         meas.font="11.5px "+FC;const ul=e.ustaz?wrap(meas,e.ustaz,wm):[];
         const rl=(e.cancelled&&e.reason)?wrap(meas,"Sebab: "+e.reason,wm):[];
         const h=6+tl.length*15+ul.length*14+17+3+(e.cancelled?20+rl.length*14:0);sum+=h;return {e,tl,ul,rl,h};});
-      rc.push(boxes);mx=Math.max(mx,sum);
+      boxes.sp=spd||null;rc.push(boxes);mx=Math.max(mx,sum);
     }
     cells.push(rc);rowH.push(mx);
   }
   const HEAD=88,DH=34,STRIP=26,FOOT=68;
-  let H=HEAD+DH+2+rowH.reduce((a,b)=>a+b+STRIP+2,0)+FOOT;
+  const note=((S.notes||{})[monKey()]||"").trim();meas.font="bold 15px "+FC;
+  const nl=note?[].concat(...note.split("\n").map(p=>wrap(meas,p||" ",W-2*M-28))):[];const NH=nl.length?nl.length*21+22:0;
+  let H=HEAD+DH+2+rowH.reduce((a,b)=>a+b+STRIP+2,0)+NH+FOOT;
   if(H<720){const ex=(720-H)/rows;for(let r=0;r<rows;r++)rowH[r]+=ex;H=720;}
   H=Math.round(H);
   const cv=document.createElement("canvas");cv.width=W*SC;cv.height=H*SC;const ctx=cv.getContext("2d");ctx.scale(SC,SC);
@@ -727,25 +854,27 @@ async function makeImage(){
   drawBackground(ctx,W,H);
   // kepala
   if(logo)ctx.drawImage(logo,22,3,128,81);
-  ctx.fillStyle="#ffff00";ctx.font="bold 17px "+FC;ctx.fillText(S.settings.surau1,152,54);ctx.fillText(S.settings.surau2,152,76);
+  ctx.fillStyle=th.acc;ctx.font="bold 17px "+FC;ctx.fillText(S.settings.surau1,152,54);ctx.fillText(S.settings.surau2,152,76);
   const T=titleFor();let fs=29;ctx.font="bold "+fs+"px "+FC;while(ctx.measureText(T).width>700&&fs>16){fs--;ctx.font="bold "+fs+"px "+FC;}
   ctx.textAlign="center";ctx.fillText(T,748,56);ctx.textAlign="left";
   // hari
   let y=HEAD;
   ["ISNIN","SELASA","RABU","KHAMIS","JUMAAT","SABTU","AHAD"].forEach((n,i)=>{
-    ctx.fillStyle="#4473c1";ctx.fillRect(M+i*CW+1,y,CW-2,DH);
+    ctx.fillStyle=th.band;ctx.fillRect(M+i*CW+1,y,CW-2,DH);
     ctx.fillStyle="#000";ctx.font="bold 21px "+FS;ctx.fillText(n,M+i*CW+8,y+25);
   });
   y+=DH+2;
   for(let r=0;r<rows;r++){
     for(let c=0;c<7;c++){
       const x=M+c*CW,d=r*7+c-lead+1,ok=d>=1&&d<=dim;
-      ctx.fillStyle=ok?"#cfd5eb":"#e9ecf5";ctx.fillRect(x+1,y,CW-2,STRIP);
-      ctx.fillStyle="#e9ecf5";ctx.fillRect(x+1,y+STRIP,CW-2,rowH[r]);
+      ctx.fillStyle=ok?th.s1:th.s2;ctx.fillRect(x+1,y,CW-2,STRIP);
+      ctx.fillStyle=th.s2;ctx.fillRect(x+1,y+STRIP,CW-2,rowH[r]);
       if(!ok)continue;
       ctx.fillStyle="#111";ctx.font="15px "+FC;ctx.fillText(d+" ("+hText(new Date(vy,vm,d))+")",x+5,y+19);
-      const boxes=cells[r][c];if(!boxes.length)continue;
-      const sum=boxes.reduce((a,b)=>a+b.h,0),extra=(rowH[r]-sum)/boxes.length;let by=y+STRIP;
+      const boxes=cells[r][c],spc=boxes.sp;
+      if(spc){ctx.fillStyle=spc.color;ctx.fillRect(x+1,y+STRIP,CW-2,17);ctx.fillStyle=ink(spc.color);let f2=11;ctx.font="bold "+f2+"px "+FC;while(ctx.measureText(spc.label).width>CW-10&&f2>7){f2--;ctx.font="bold "+f2+"px "+FC;}ctx.textAlign="center";ctx.fillText(spc.label,x+CW/2,y+STRIP+12.5);ctx.textAlign="left";}
+      if(!boxes.length)continue;
+      const sph=spc?17:0,sum=boxes.reduce((a,b)=>a+b.h,0)+sph,extra=(rowH[r]-sum)/boxes.length;let by=y+STRIP+sph;
       boxes.forEach(b=>{
         const bh=b.h+extra;
         if(b.e.cancelled){drawCancelled(ctx,b,x,by,bh,CW);by+=bh;return;}
@@ -766,16 +895,78 @@ async function makeImage(){
     }
     y+=STRIP+rowH[r]+2;
   }
+  if(nl.length){ctx.fillStyle="rgba(255,255,255,.93)";rr(ctx,M,y+6,W-2*M,NH-8,8);ctx.fill();ctx.fillStyle="#12324a";ctx.font="bold 15px "+FC;nl.forEach((l,k)=>ctx.fillText(l,M+14,y+6+25+k*21));}
   // kaki
-  ctx.fillStyle="#ffff00";ctx.font="bold 22px "+FC;ctx.fillText(S.settings.footL,35,H-30);
+  ctx.fillStyle=th.acc;ctx.font="bold 22px "+FC;ctx.fillText(S.settings.footL,35,H-30);
   const rx=868,rw=W-rx-M;
   const fit=(t,size,weight,max)=>{let f=size;ctx.font=weight+" "+f+"px "+FS;while(ctx.measureText(t).width>rw&&f>max){f--;ctx.font=weight+" "+f+"px "+FS;}return f;};
   fit(S.settings.footR0||"",12,"bold",8);ctx.fillText(S.settings.footR0||"",rx,H-48);
   fit(S.settings.footR1||"",25,"bold",12);ctx.fillText(S.settings.footR1||"",rx,H-27);
   fit(S.settings.footR2||"",11.5,"bold",7);ctx.fillText(S.settings.footR2||"",rx,H-10);
-  cv.toBlob(b=>{lastBlob=b;$("outImg").src=URL.createObjectURL(b);open("imgDlg");},"image/jpeg",0.9);
+  cv.toBlob(b=>{curImgName=null;lastBlob=b;$("outImg").src=URL.createObjectURL(b);open("imgDlg");},"image/jpeg",0.9);
 }
-const imgName=()=>"jadual-kitab-"+vy+"-"+pad(vm+1)+".jpg";
+let curImgName=null;
+async function makeWeekImage(){
+  lastKind="week";renderThemes();await ensureFonts();const logo=await loadLogo();const th=TH();
+  const t=nowD(),map=byDate(),sp=S.special||{},days=[];
+  for(let i=0;i<7;i++)days.push(new Date(t.getFullYear(),t.getMonth(),t.getDate()+i));
+  const W=1080,SC=2,M=30,HEAD=122,FOOT=76,DH=40,IW=W-2*M,TW=IW-300;
+  const meas=document.createElement("canvas").getContext("2d");
+  const rows=days.map(d=>{
+    const ds=toYmd(d),evs=map[ds]||[];
+    const items=evs.map(e=>{
+      meas.font="bold 24px "+FC;const tl=wrap(meas,e.title.toUpperCase(),TW);
+      meas.font="20px "+FC;const ul=e.ustaz?wrap(meas,e.ustaz,TW):[];
+      const rl=(e.cancelled&&e.reason)?wrap(meas,"Sebab: "+e.reason,TW):[];
+      return {e,tl,ul,rl,h:Math.max(62,18+tl.length*29+ul.length*25+rl.length*24+10)};});
+    return {d,ds,items,s:sp[ds],h:DH+(items.length?items.reduce((a,b)=>a+b.h+4,0):46)+6};
+  });
+  const H=Math.round(HEAD+rows.reduce((a,b)=>a+b.h,0)+FOOT);
+  const cv=document.createElement("canvas");cv.width=W*SC;cv.height=H*SC;const ctx=cv.getContext("2d");ctx.scale(SC,SC);
+  ctx.textBaseline="alphabetic";drawBackground(ctx,W,H);
+  if(logo)ctx.drawImage(logo,22,3,128,81);
+  ctx.fillStyle=th.acc;ctx.font="bold 17px "+FC;ctx.fillText(S.settings.surau1,152,54);ctx.fillText(S.settings.surau2,152,76);
+  const T=S.settings.tajuk+" - MINGGU INI";let fs=27;ctx.font="bold "+fs+"px "+FC;while(ctx.measureText(T).width>560&&fs>14){fs--;ctx.font="bold "+fs+"px "+FC;}
+  ctx.textAlign="center";ctx.fillText(T,W-M-290,50);
+  const a=days[0],b=days[6],rg=a.getDate()+(a.getMonth()!==b.getMonth()?" "+BULAN[a.getMonth()].toUpperCase():"")+" - "+b.getDate()+" "+BULAN[b.getMonth()].toUpperCase()+" "+b.getFullYear();
+  ctx.font="bold 22px "+FC;ctx.fillText(rg,W-M-290,82);ctx.textAlign="left";
+  let y=HEAD-10;
+  rows.forEach(r=>{
+    const d=r.d;
+    ctx.fillStyle=r.s?r.s.color:th.band;ctx.fillRect(M,y,IW,DH);
+    ctx.fillStyle=r.s?ink(r.s.color):"#000";ctx.font="bold 21px "+FS;
+    ctx.fillText(HARI[d.getDay()].toUpperCase()+", "+d.getDate()+" "+BULAN[d.getMonth()].toUpperCase()+"  ("+hText(d)+")",M+10,y+27);
+    if(r.s){ctx.textAlign="right";ctx.font="bold 19px "+FC;ctx.fillText("⭐ "+r.s.label,M+IW-12,y+27);ctx.textAlign="left";}
+    y+=DH;
+    if(!r.items.length){ctx.fillStyle=th.s2;ctx.fillRect(M,y,IW,46);ctx.fillStyle="#6b7280";ctx.font="italic 18px "+FC;ctx.fillText("Tiada kuliah",M+14,y+30);y+=46+6;return;}
+    r.items.forEach(it=>{
+      const e=it.e;
+      if(e.cancelled){
+        ctx.fillStyle="#d3d6dc";ctx.fillRect(M,y,IW,it.h);ctx.fillStyle=e.color;ctx.fillRect(M,y,7,it.h);
+        ctx.font="bold 15px "+FC;const bw=ctx.measureText("DITANGGUHKAN").width+16;ctx.fillStyle="#c40000";rr(ctx,M+16,y+7,bw,22,4);ctx.fill();ctx.fillStyle="#fff";ctx.fillText("DITANGGUHKAN",M+24,y+23);
+        let ty=y+54;ctx.fillStyle="#4b5058";ctx.font="bold 24px "+FC;it.tl.forEach(l=>{ctx.fillText(l,M+16,ty);ctx.fillRect(M+16,ty-8,ctx.measureText(l).width,2);ty+=29;});
+        ctx.font="20px "+FC;it.ul.forEach(l=>{ctx.fillText(l,M+16,ty-4);ty+=25;});
+        ctx.fillStyle="#a00000";ctx.font="18px "+FC;it.rl.forEach(l=>{ctx.fillText(l,M+16,ty);ty+=24;});
+      }else{
+        ctx.fillStyle=e.color;ctx.fillRect(M,y,IW,it.h);
+        const dark=ink(e.color)==="#fff",cT=dark?"#ffff00":"#111",cU=dark?"#fff":"#111";
+        let ty=y+30;ctx.fillStyle=cT;ctx.font="bold 24px "+FC;it.tl.forEach(l=>{ctx.fillText(l,M+16,ty);ty+=29;});
+        ctx.fillStyle=cU;ctx.font="20px "+FC;it.ul.forEach(l=>{ctx.fillText(l,M+16,ty-2);ty+=25;});
+        ctx.textAlign="right";ctx.font="bold 22px "+FC;ctx.fillStyle=cU;ctx.fillText("("+waktuText(e).toUpperCase()+")",M+IW-16,y+it.h/2+8);ctx.textAlign="left";
+      }
+      y+=it.h+4;
+    });
+    y+=6;
+  });
+  ctx.fillStyle=th.acc;ctx.font="bold 22px "+FC;ctx.fillText(S.settings.footL,35,H-30);
+  const rx=W-M-440,rw=440;
+  const fit=(tx,size,weight,max)=>{let f=size;ctx.font=weight+" "+f+"px "+FS;while(ctx.measureText(tx).width>rw&&f>max){f--;ctx.font=weight+" "+f+"px "+FS;}return f;};
+  fit(S.settings.footR0||"",12,"bold",8);ctx.fillText(S.settings.footR0||"",rx,H-48);
+  fit(S.settings.footR1||"",25,"bold",12);ctx.fillText(S.settings.footR1||"",rx,H-27);
+  fit(S.settings.footR2||"",11.5,"bold",7);ctx.fillText(S.settings.footR2||"",rx,H-10);
+  cv.toBlob(bl=>{curImgName="jadual-minggu-"+toYmd(t)+".jpg";lastBlob=bl;$("outImg").src=URL.createObjectURL(bl);open("imgDlg");},"image/jpeg",0.9);
+}
+const imgName=()=>curImgName||"jadual-kitab-"+vy+"-"+pad(vm+1)+".jpg";
 $("imgDown").onclick=()=>{if(lastBlob)download(imgName(),lastBlob);};
 $("imgShare").onclick=()=>{if(lastBlob)share(new File([lastBlob],imgName(),{type:"image/jpeg"}));};
 
@@ -785,6 +976,7 @@ window.addEventListener("resize",()=>{if(!S.settings.view)render();});
 // buka bulan terdekat yang ada data jika bulan semasa kosong
 (function(){const k=vy+"-"+pad(vm+1)+"-";if(!S.events.some(e=>e.date.startsWith(k))&&S.events.length){const ds=S.events.map(e=>e.date).sort();const t=toYmd(new Date());const pick=ds.find(d=>d>=t)||ds[ds.length-1];const p=parse(pick);vy=p.getFullYear();vm=p.getMonth();}})();
 render();
+if(drivePending())autoBackupSoon();
 
 /* semakan versi baru */
 (function(){
