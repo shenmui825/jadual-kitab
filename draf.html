@@ -336,7 +336,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.8.0-draf.4 (22 Nov 2026)";
+const VER="1.8.0-draf.5 (22 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -780,7 +780,12 @@ const THEMES=[
  {id:"biru",name:"Biru",g:["#123a73","#2f6fbf","#1f55a0","#0b2a5c"],glow:"140,190,240",l:"2,20,60",acc:"#ffe45c",band:"#8fb8e8",s1:"#d3e2f5",s2:"#eef3fa"},
  {id:"hijau",name:"Hijau",g:["#14532d","#2f8f57","#1f7a45","#0b3d20"],glow:"150,220,170",l:"2,40,20",acc:"#fff27a",band:"#9bd39a",s1:"#d4e8d2",s2:"#eef6ec"},
  {id:"ungu",name:"Ungu",g:["#3d1f6e","#7b4fb8","#6638a6","#2a1450"],glow:"190,160,235",l:"30,10,60",acc:"#ffe86b",band:"#c3a8e6",s1:"#e0d6f0",s2:"#f3eef9"},
- {id:"merah",name:"Maroon",g:["#6e1a26","#b5414f","#9a2f3d","#4d0e18"],glow:"240,170,170",l:"50,5,15",acc:"#ffe08a",band:"#e8c36a",s1:"#f1dcd0",s2:"#f9efe9"}
+ {id:"merah",name:"Maroon",g:["#6e1a26","#b5414f","#9a2f3d","#4d0e18"],glow:"240,170,170",l:"50,5,15",acc:"#ffe08a",band:"#e8c36a",s1:"#f1dcd0",s2:"#f9efe9"},
+ {id:"jingga",name:"Jingga",g:["#a8430f","#e8832f","#d46a1c","#7a2d06"],glow:"255,205,150",l:"70,25,0",acc:"#fff3a0",band:"#f4c58a",s1:"#f6dcc2",s2:"#fbf0e4"},
+ {id:"rose",name:"Rose",g:["#a8325e","#e0709a","#cc5583","#7a1f45"],glow:"255,200,220",l:"80,10,40",acc:"#fff1b0",band:"#f2b1cb",s1:"#f6d6e2",s2:"#fbeef3"},
+ {id:"arang",name:"Arang",g:["#1f2326","#4a525a","#383e44","#121416"],glow:"170,180,190",l:"0,0,0",acc:"#ffd54a",band:"#d9b95b",s1:"#dcdfe3",s2:"#eff1f3"},
+ {id:"coklat",name:"Coklat",g:["#4a2c17","#8d5a34","#744522","#2e1809"],glow:"230,190,150",l:"30,12,0",acc:"#ffe29a",band:"#d8b48a",s1:"#eadccb",s2:"#f6efe6"},
+ {id:"laut",name:"Laut",g:["#0a6b78","#18b4c4","#0f95a6","#064650"],glow:"160,240,245",l:"0,50,60",acc:"#fff59d",band:"#86dbe3",s1:"#cdeef1",s2:"#eaf8f9"}
 ];
 const TH=()=>THEMES.find(t=>t.id===S.settings.theme)||THEMES[0];
 let lastKind="month";
