@@ -84,6 +84,7 @@ a.btn{text-decoration:none;display:inline-block;text-align:center}
 .menu .btn small{display:block;color:var(--mut);font-weight:400}
 .note{font-size:12px;color:var(--mut);margin:6px 0 0}
 #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:999px;z-index:99;display:none;max-width:90vw;text-align:center}
+#imgwrap.busy #outImg{opacity:.45}
 #imgwrap img{width:100%;border:1px solid var(--line);border-radius:8px}
 textarea.code{font-family:monospace;font-size:11px;height:140px}
 .cl{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
@@ -335,7 +336,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.8.0 (22 Nov 2026)";
+const VER="1.8.1 (22 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -790,11 +791,34 @@ const THEMES=[
 ];
 const TH=()=>THEMES.find(t=>t.id===S.settings.theme)||THEMES[0];
 let lastKind="month";
+let hi=null,hiT=null,prevURL=null,thBusy=false,thPend=null;
+const hiKey=()=>lastKind+"|"+TH().id+"|"+vy+"-"+vm+"|"+toYmd(nowD());
+function showBlob(b,q,hk){
+  if(q){hi={key:hk,blob:b};return;}
+  lastBlob=b;if(prevURL)URL.revokeObjectURL(prevURL);prevURL=URL.createObjectURL(b);
+  $("outImg").src=prevURL;open("imgDlg");$("imgwrap").classList.remove("busy");
+  clearTimeout(hiT);hiT=setTimeout(()=>{if(!$("imgDlg").classList.contains("on"))return;(lastKind==="week"?makeWeekImage:makeImage)(true);},1500);
+}
+async function hiRes(){
+  clearTimeout(hiT);
+  if(hi&&hi.key===hiKey())return hi.blob;
+  toast("Menyediakan gambar…");
+  return lastKind==="week"?await makeWeekImage(true):await makeImage(true);
+}
 function renderThemes(){
   const cur=TH().id;
   $("thRow").innerHTML=THEMES.map(t=>'<button type="button" class="thc'+(t.id===cur?' on':'')+'" data-th="'+t.id+'" style="background:linear-gradient(135deg,'+t.g[0]+','+t.g[1]+')">'+t.name+'</button>').join("");
 }
-$("thRow").onclick=e=>{const id=e.target.dataset&&e.target.dataset.th;if(!id)return;S.settings.theme=id;save();if(lastKind==="week")makeWeekImage();else makeImage();};
+async function applyTheme(id){
+  if(thBusy){thPend=id;return;}
+  thBusy=true;clearTimeout(hiT);
+  S.settings.theme=id;save();renderThemes();$("imgwrap").classList.add("busy");
+  await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,20)));
+  try{if(lastKind==="week")await makeWeekImage();else await makeImage();}catch(e){}
+  thBusy=false;
+  if(thPend&&thPend!==S.settings.theme){const p=thPend;thPend=null;applyTheme(p);}else thPend=null;
+}
+$("thRow").onclick=e=>{const id=e.target.dataset&&e.target.dataset.th;if(id)applyTheme(id);};
 function drawBackground(ctx,W,H){
   const th=TH();
   const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,th.g[0]);g.addColorStop(.38,th.g[1]);g.addColorStop(.72,th.g[2]);g.addColorStop(1,th.g[3]);
@@ -823,9 +847,9 @@ function drawCancelled(ctx,b,x,by,bh,cw){
   ctx.font="bold 11.5px "+FC;ctx.fillText("("+b.e.waktu.toUpperCase()+")",tx,ty+1);ty+=17;
   ctx.fillStyle="#a00000";ctx.font="11.5px "+FC;b.rl.forEach(l=>{ctx.fillText(l,tx,ty);ty+=14;});
 }
-async function makeImage(){
-  lastKind="month";renderThemes();await ensureFonts();const logo=await loadLogo();const th=TH();
-  const W=1280,SC=2,M=25,CW=(W-2*M)/7,map=byDate();
+async function makeImage(q){
+  lastKind="month";renderThemes();await ensureFonts();const logo=await loadLogo();const th=TH(),hk=hiKey();
+  const W=1280,SC=q?2:1,M=25,CW=(W-2*M)/7,map=byDate();
   const dim=new Date(vy,vm+1,0).getDate(),lead=(new Date(vy,vm,1).getDay()+6)%7,rows=Math.ceil((lead+dim)/7);
   const meas=document.createElement("canvas").getContext("2d");
   const cells=[],rowH=[];
@@ -903,14 +927,14 @@ async function makeImage(){
   fit(S.settings.footR0||"",12,"bold",8);ctx.fillText(S.settings.footR0||"",rx,H-48);
   fit(S.settings.footR1||"",25,"bold",12);ctx.fillText(S.settings.footR1||"",rx,H-27);
   fit(S.settings.footR2||"",11.5,"bold",7);ctx.fillText(S.settings.footR2||"",rx,H-10);
-  cv.toBlob(b=>{curImgName=null;lastBlob=b;$("outImg").src=URL.createObjectURL(b);open("imgDlg");},"image/jpeg",0.9);
+  return new Promise(res=>cv.toBlob(b=>{curImgName=null;showBlob(b,q,hk);res(b);},"image/jpeg",0.9));
 }
 let curImgName=null;
-async function makeWeekImage(){
-  lastKind="week";renderThemes();await ensureFonts();const logo=await loadLogo();const th=TH();
+async function makeWeekImage(q){
+  lastKind="week";renderThemes();await ensureFonts();const logo=await loadLogo();const th=TH(),hk=hiKey();
   const t=nowD(),map=byDate(),sp=S.special||{},days=[];
   for(let i=0;i<7;i++)days.push(new Date(t.getFullYear(),t.getMonth(),t.getDate()+i));
-  const W=1080,SC=2,M=30,HEAD=122,FOOT=76,DH=40,IW=W-2*M,TW=IW-300;
+  const W=1080,SC=q?2:1,M=30,HEAD=122,FOOT=76,DH=40,IW=W-2*M,TW=IW-300;
   const meas=document.createElement("canvas").getContext("2d");
   const rows=days.map(d=>{
     const ds=toYmd(d),evs=map[ds]||[];
@@ -964,11 +988,11 @@ async function makeWeekImage(){
   fit(S.settings.footR0||"",12,"bold",8);ctx.fillText(S.settings.footR0||"",rx,H-48);
   fit(S.settings.footR1||"",25,"bold",12);ctx.fillText(S.settings.footR1||"",rx,H-27);
   fit(S.settings.footR2||"",11.5,"bold",7);ctx.fillText(S.settings.footR2||"",rx,H-10);
-  cv.toBlob(bl=>{curImgName="jadual-minggu-"+toYmd(t)+".jpg";lastBlob=bl;$("outImg").src=URL.createObjectURL(bl);open("imgDlg");},"image/jpeg",0.9);
+  return new Promise(res=>cv.toBlob(bl=>{curImgName="jadual-minggu-"+toYmd(t)+".jpg";showBlob(bl,q,hk);res(bl);},"image/jpeg",0.9));
 }
 const imgName=()=>curImgName||"jadual-kitab-"+vy+"-"+pad(vm+1)+".jpg";
-$("imgDown").onclick=()=>{if(lastBlob)download(imgName(),lastBlob);};
-$("imgShare").onclick=()=>{if(lastBlob)share(new File([lastBlob],imgName(),{type:"image/jpeg"}));};
+$("imgDown").onclick=async()=>{const b=await hiRes();if(b)download(imgName(),b);};
+$("imgShare").onclick=async()=>{const b=await hiRes();if(b)share(new File([b],imgName(),{type:"image/jpeg"}));};
 
 /* ---------- Boot ---------- */
 document.querySelectorAll(".back").forEach(b=>b.addEventListener("click",e=>{if(e.target===b&&b.id!=="cfDlg")b.classList.remove("on");}));
