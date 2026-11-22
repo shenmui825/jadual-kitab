@@ -61,6 +61,9 @@ main{padding:10px 12px 90px;max-width:1280px;margin:0 auto}
 .flt select{flex:1;min-width:120px;padding:7px;font-size:13px}
 .flt button{border:0;background:#e3ecee;border-radius:8px;padding:8px 10px;font-weight:600}
 .flt small{flex-basis:100%;color:var(--mut);font-size:11px}
+.thr{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.thc{border:3px solid transparent;border-radius:10px;color:#fff;font-weight:700;font-size:12px;padding:10px 12px;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.thc.on{border-color:#f5c542}
 /* dialogs */
 .back{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:none;align-items:flex-end;justify-content:center}
 .back.on{display:flex}
@@ -252,6 +255,7 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
 <div class="back" id="imgDlg"><div class="sheet" id="imgwrap">
   <h2>Gambar jadual</h2>
   <img id="outImg" alt="Jadual">
+  <label>Tema</label><div id="thRow" class="thr"></div>
   <p class="note">Jika butang muat turun tidak berfungsi, tekan lama pada gambar lalu pilih Simpan.</p>
   <div class="btns">
     <button class="btn" id="imgDown">Muat turun JPG</button>
@@ -332,7 +336,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.8.0-draf.3 (22 Nov 2026)";
+const VER="1.8.0-draf.4 (22 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -771,18 +775,33 @@ function rosette(ctx,cx,cy,r,rot){
   petals(r,rot||0);petals(r*.62,(rot||0)+Math.PI/8);
   ctx.beginPath();ctx.arc(cx,cy,r*.2,0,Math.PI*2);ctx.stroke();
 }
+const THEMES=[
+ {id:"teal",name:"Teal",g:["#1b6475","#3b9fae","#2a8a9c","#0d596e"],glow:"130,205,210",l:"3,52,76",acc:"#ffff00",band:"#4473c1",s1:"#cfd5eb",s2:"#e9ecf5"},
+ {id:"biru",name:"Biru",g:["#123a73","#2f6fbf","#1f55a0","#0b2a5c"],glow:"140,190,240",l:"2,20,60",acc:"#ffe45c",band:"#8fb8e8",s1:"#d3e2f5",s2:"#eef3fa"},
+ {id:"hijau",name:"Hijau",g:["#14532d","#2f8f57","#1f7a45","#0b3d20"],glow:"150,220,170",l:"2,40,20",acc:"#fff27a",band:"#9bd39a",s1:"#d4e8d2",s2:"#eef6ec"},
+ {id:"ungu",name:"Ungu",g:["#3d1f6e","#7b4fb8","#6638a6","#2a1450"],glow:"190,160,235",l:"30,10,60",acc:"#ffe86b",band:"#c3a8e6",s1:"#e0d6f0",s2:"#f3eef9"},
+ {id:"merah",name:"Maroon",g:["#6e1a26","#b5414f","#9a2f3d","#4d0e18"],glow:"240,170,170",l:"50,5,15",acc:"#ffe08a",band:"#e8c36a",s1:"#f1dcd0",s2:"#f9efe9"}
+];
+const TH=()=>THEMES.find(t=>t.id===S.settings.theme)||THEMES[0];
+let lastKind="month";
+function renderThemes(){
+  const cur=TH().id;
+  $("thRow").innerHTML=THEMES.map(t=>'<button type="button" class="thc'+(t.id===cur?' on':'')+'" data-th="'+t.id+'" style="background:linear-gradient(135deg,'+t.g[0]+','+t.g[1]+')">'+t.name+'</button>').join("");
+}
+$("thRow").onclick=e=>{const id=e.target.dataset&&e.target.dataset.th;if(!id)return;S.settings.theme=id;save();if(lastKind==="week")makeWeekImage();else makeImage();};
 function drawBackground(ctx,W,H){
-  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,"#1b6475");g.addColorStop(.38,"#3b9fae");g.addColorStop(.72,"#2a8a9c");g.addColorStop(1,"#0d596e");
+  const th=TH();
+  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,th.g[0]);g.addColorStop(.38,th.g[1]);g.addColorStop(.72,th.g[2]);g.addColorStop(1,th.g[3]);
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  const rg=ctx.createRadialGradient(W*.22,H*.5,10,W*.22,H*.5,W*.55);rg.addColorStop(0,"rgba(130,205,210,.40)");rg.addColorStop(1,"rgba(130,205,210,0)");ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
-  ctx.save();ctx.strokeStyle="rgba(3,52,76,.26)";ctx.lineWidth=2;
+  const rg=ctx.createRadialGradient(W*.22,H*.5,10,W*.22,H*.5,W*.55);rg.addColorStop(0,"rgba("+th.glow+",.40)");rg.addColorStop(1,"rgba("+th.glow+",0)");ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.strokeStyle="rgba("+th.l+",.26)";ctx.lineWidth=2;
   const R=104,dy=R*Math.sqrt(3)/2;
   for(let j=-1;j*dy<H+R;j++)for(let i=-1;i*R<W+R;i++){ctx.beginPath();ctx.arc(i*R+(j&1?R/2:0),j*dy,R,0,Math.PI*2);ctx.stroke();}
-  ctx.strokeStyle="rgba(3,52,76,.62)";ctx.lineWidth=1.8;
+  ctx.strokeStyle="rgba("+th.l+",.62)";ctx.lineWidth=1.8;
   for(let x=560;x<W+60;x+=86)rosette(ctx,x,4,40,Math.PI/8);
   for(let x=330;x<800;x+=86)rosette(ctx,x,H-14,38,Math.PI/8);
   rosette(ctx,150,H-6,44,0);
-  ctx.fillStyle="rgba(3,52,76,.55)";[[48,92],[330,72],[960,150],[1240,300],[760,H-50]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle="rgba("+th.l+",.55)";[[48,92],[330,72],[960,150],[1240,300],[760,H-50]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();});
   ctx.restore();
 }
 function drawCancelled(ctx,b,x,by,bh,cw){
@@ -799,7 +818,7 @@ function drawCancelled(ctx,b,x,by,bh,cw){
   ctx.fillStyle="#a00000";ctx.font="11.5px "+FC;b.rl.forEach(l=>{ctx.fillText(l,tx,ty);ty+=14;});
 }
 async function makeImage(){
-  await ensureFonts();const logo=await loadLogo();
+  lastKind="month";renderThemes();await ensureFonts();const logo=await loadLogo();const th=TH();
   const W=1280,SC=2,M=25,CW=(W-2*M)/7,map=byDate();
   const dim=new Date(vy,vm+1,0).getDate(),lead=(new Date(vy,vm,1).getDay()+6)%7,rows=Math.ceil((lead+dim)/7);
   const meas=document.createElement("canvas").getContext("2d");
@@ -829,21 +848,21 @@ async function makeImage(){
   drawBackground(ctx,W,H);
   // kepala
   if(logo)ctx.drawImage(logo,22,3,128,81);
-  ctx.fillStyle="#ffff00";ctx.font="bold 17px "+FC;ctx.fillText(S.settings.surau1,152,54);ctx.fillText(S.settings.surau2,152,76);
+  ctx.fillStyle=th.acc;ctx.font="bold 17px "+FC;ctx.fillText(S.settings.surau1,152,54);ctx.fillText(S.settings.surau2,152,76);
   const T=titleFor();let fs=29;ctx.font="bold "+fs+"px "+FC;while(ctx.measureText(T).width>700&&fs>16){fs--;ctx.font="bold "+fs+"px "+FC;}
   ctx.textAlign="center";ctx.fillText(T,748,56);ctx.textAlign="left";
   // hari
   let y=HEAD;
   ["ISNIN","SELASA","RABU","KHAMIS","JUMAAT","SABTU","AHAD"].forEach((n,i)=>{
-    ctx.fillStyle="#4473c1";ctx.fillRect(M+i*CW+1,y,CW-2,DH);
+    ctx.fillStyle=th.band;ctx.fillRect(M+i*CW+1,y,CW-2,DH);
     ctx.fillStyle="#000";ctx.font="bold 21px "+FS;ctx.fillText(n,M+i*CW+8,y+25);
   });
   y+=DH+2;
   for(let r=0;r<rows;r++){
     for(let c=0;c<7;c++){
       const x=M+c*CW,d=r*7+c-lead+1,ok=d>=1&&d<=dim;
-      ctx.fillStyle=ok?"#cfd5eb":"#e9ecf5";ctx.fillRect(x+1,y,CW-2,STRIP);
-      ctx.fillStyle="#e9ecf5";ctx.fillRect(x+1,y+STRIP,CW-2,rowH[r]);
+      ctx.fillStyle=ok?th.s1:th.s2;ctx.fillRect(x+1,y,CW-2,STRIP);
+      ctx.fillStyle=th.s2;ctx.fillRect(x+1,y+STRIP,CW-2,rowH[r]);
       if(!ok)continue;
       ctx.fillStyle="#111";ctx.font="15px "+FC;ctx.fillText(d+" ("+hText(new Date(vy,vm,d))+")",x+5,y+19);
       const boxes=cells[r][c],spc=boxes.sp;
@@ -872,7 +891,7 @@ async function makeImage(){
   }
   if(nl.length){ctx.fillStyle="rgba(255,255,255,.93)";rr(ctx,M,y+6,W-2*M,NH-8,8);ctx.fill();ctx.fillStyle="#12324a";ctx.font="bold 15px "+FC;nl.forEach((l,k)=>ctx.fillText(l,M+14,y+6+25+k*21));}
   // kaki
-  ctx.fillStyle="#ffff00";ctx.font="bold 22px "+FC;ctx.fillText(S.settings.footL,35,H-30);
+  ctx.fillStyle=th.acc;ctx.font="bold 22px "+FC;ctx.fillText(S.settings.footL,35,H-30);
   const rx=868,rw=W-rx-M;
   const fit=(t,size,weight,max)=>{let f=size;ctx.font=weight+" "+f+"px "+FS;while(ctx.measureText(t).width>rw&&f>max){f--;ctx.font=weight+" "+f+"px "+FS;}return f;};
   fit(S.settings.footR0||"",12,"bold",8);ctx.fillText(S.settings.footR0||"",rx,H-48);
@@ -882,7 +901,7 @@ async function makeImage(){
 }
 let curImgName=null;
 async function makeWeekImage(){
-  await ensureFonts();const logo=await loadLogo();
+  lastKind="week";renderThemes();await ensureFonts();const logo=await loadLogo();const th=TH();
   const t=nowD(),map=byDate(),sp=S.special||{},days=[];
   for(let i=0;i<7;i++)days.push(new Date(t.getFullYear(),t.getMonth(),t.getDate()+i));
   const W=1080,SC=2,M=30,HEAD=122,FOOT=76,DH=40,IW=W-2*M,TW=IW-300;
@@ -900,7 +919,7 @@ async function makeWeekImage(){
   const cv=document.createElement("canvas");cv.width=W*SC;cv.height=H*SC;const ctx=cv.getContext("2d");ctx.scale(SC,SC);
   ctx.textBaseline="alphabetic";drawBackground(ctx,W,H);
   if(logo)ctx.drawImage(logo,22,3,128,81);
-  ctx.fillStyle="#ffff00";ctx.font="bold 17px "+FC;ctx.fillText(S.settings.surau1,152,54);ctx.fillText(S.settings.surau2,152,76);
+  ctx.fillStyle=th.acc;ctx.font="bold 17px "+FC;ctx.fillText(S.settings.surau1,152,54);ctx.fillText(S.settings.surau2,152,76);
   const T=S.settings.tajuk+" - MINGGU INI";let fs=27;ctx.font="bold "+fs+"px "+FC;while(ctx.measureText(T).width>560&&fs>14){fs--;ctx.font="bold "+fs+"px "+FC;}
   ctx.textAlign="center";ctx.fillText(T,W-M-290,50);
   const a=days[0],b=days[6],rg=a.getDate()+(a.getMonth()!==b.getMonth()?" "+BULAN[a.getMonth()].toUpperCase():"")+" - "+b.getDate()+" "+BULAN[b.getMonth()].toUpperCase()+" "+b.getFullYear();
@@ -908,12 +927,12 @@ async function makeWeekImage(){
   let y=HEAD-10;
   rows.forEach(r=>{
     const d=r.d;
-    ctx.fillStyle=r.s?r.s.color:"#4473c1";ctx.fillRect(M,y,IW,DH);
+    ctx.fillStyle=r.s?r.s.color:th.band;ctx.fillRect(M,y,IW,DH);
     ctx.fillStyle=r.s?ink(r.s.color):"#000";ctx.font="bold 21px "+FS;
     ctx.fillText(HARI[d.getDay()].toUpperCase()+", "+d.getDate()+" "+BULAN[d.getMonth()].toUpperCase()+"  ("+hText(d)+")",M+10,y+27);
     if(r.s){ctx.textAlign="right";ctx.font="bold 19px "+FC;ctx.fillText("⭐ "+r.s.label,M+IW-12,y+27);ctx.textAlign="left";}
     y+=DH;
-    if(!r.items.length){ctx.fillStyle="#e9ecf5";ctx.fillRect(M,y,IW,46);ctx.fillStyle="#6b7280";ctx.font="italic 18px "+FC;ctx.fillText("Tiada kuliah",M+14,y+30);y+=46+6;return;}
+    if(!r.items.length){ctx.fillStyle=th.s2;ctx.fillRect(M,y,IW,46);ctx.fillStyle="#6b7280";ctx.font="italic 18px "+FC;ctx.fillText("Tiada kuliah",M+14,y+30);y+=46+6;return;}
     r.items.forEach(it=>{
       const e=it.e;
       if(e.cancelled){
@@ -933,7 +952,7 @@ async function makeWeekImage(){
     });
     y+=6;
   });
-  ctx.fillStyle="#ffff00";ctx.font="bold 22px "+FC;ctx.fillText(S.settings.footL,35,H-30);
+  ctx.fillStyle=th.acc;ctx.font="bold 22px "+FC;ctx.fillText(S.settings.footL,35,H-30);
   const rx=W-M-440,rw=440;
   const fit=(tx,size,weight,max)=>{let f=size;ctx.font=weight+" "+f+"px "+FS;while(ctx.measureText(tx).width>rw&&f>max){f--;ctx.font=weight+" "+f+"px "+FS;}return f;};
   fit(S.settings.footR0||"",12,"bold",8);ctx.fillText(S.settings.footR0||"",rx,H-48);
