@@ -162,6 +162,7 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
   <button class="btn" data-act="copy">📋 Salin bulan ini ke bulan depan<small>Ikut susunan hari minggu, kemudian edit yang berubah</small></button>
   <button class="btn" data-act="nota">📝 Nota bulan ini<small>Pengumuman kecil di bawah jadual pada gambar</small></button>
   <button class="btn" data-act="khas">⭐ Tanda hari khas<small>Maulidur Rasul, Isra' Mikraj dan lain-lain</small></button>
+    <button class="btn" data-act="catalog">📚 Urus senarai kitab &amp; ustaz<small>Tambah atau buang kitab dan penceramah</small></button>
   <button class="btn" data-act="settings">⚙️ Tetapan<small>Nama surau, tajuk, footer, tarikh Hijrah</small></button>
   <div class="btns"><button class="btn sec" data-act="close">Tutup</button></div>
 </div></div>
@@ -637,6 +638,7 @@ document.querySelectorAll(".menu [data-act]").forEach(b=>b.onclick=()=>{
   else if(a==="nota")openNota();
   else if(a==="khas")openKhas();
   else if(a==="backup"){$("bakText").value=JSON.stringify(S);open("bakDlg");}
+  else if(a==="catalog")openCatalog();
   else if(a==="settings")openSettings();
 });
 
