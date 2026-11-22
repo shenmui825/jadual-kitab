@@ -149,7 +149,7 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
   <button class="btn" data-act="img">🖼️ Jana gambar jadual<small>JPG seperti poster, sedia kongsi di WhatsApp</small></button>
   <button class="btn" data-act="copy">📋 Salin bulan ini ke bulan depan<small>Ikut susunan hari minggu, kemudian edit yang berubah</small></button>
     <button class="btn" data-act="catalog">📚 Urus senarai kitab &amp; ustaz<small>Tambah atau buang kitab dan penceramah</small></button>
-  <button class="btn" data-act="settings">⚙️ Tetapan<small>Nama surau, footer, waktu lalai, peringatan</small></button>
+  <button class="btn" data-act="settings">⚙️ Tetapan<small>Nama surau, tajuk, footer, tarikh Hijrah</small></button>
   <div class="btns"><button class="btn sec" data-act="close">Tutup</button></div>
 </div></div>
 
@@ -294,7 +294,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.7.0 (22 Nov 2026)";
+const VER="1.7.1 (22 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -417,7 +417,7 @@ function render(){
       const ds=ymd(vy,vm,d),evs=map[ds];if(!evs)continue;any=true;
       const dt=new Date(vy,vm,d);
       h+='<div class="day'+(ds===today?" today":"")+'"><h3>'+HARI[dt.getDay()]+", "+d+" "+BULAN[vm]+'<span>'+hText(dt)+'</span></h3>'+
-      evs.map(e=>'<div class="ev'+(e.cancelled?' x':'')+'" data-id="'+e.id+'"><div class="bar" style="background:'+(e.cancelled?'#b0b4bb':e.color)+'"></div><div><div class="t">'+esc(e.title)+'</div>'+(e.ustaz?'<div class="u">'+esc(e.ustaz)+'</div>':'')+(e.cancelled?'<div class="cx">DITANGGUHKAN'+(e.reason?' · '+esc(e.reason):'')+'</div>':'')+'</div><div class="w"><b>'+esc(waktuText(e))+'</b><br>'+startOf(e)+'</div></div>').join("")+'</div>';
+      evs.map(e=>'<div class="ev'+(e.cancelled?' x':'')+'" data-id="'+e.id+'"><div class="bar" style="background:'+(e.cancelled?'#b0b4bb':e.color)+'"></div><div><div class="t">'+esc(e.title)+'</div>'+(e.ustaz?'<div class="u">'+esc(e.ustaz)+'</div>':'')+(e.cancelled?'<div class="cx">DITANGGUHKAN'+(e.reason?' · '+esc(e.reason):'')+'</div>':'')+'</div><div class="w"><b>'+esc(waktuText(e))+'</b></div></div>').join("")+'</div>';
     }
     if(!any)h='<div class="empty">Tiada kuliah bulan ini.<br>Tekan “+ Tambah kuliah” atau “Salin bulan ini ke bulan depan” di menu.</div>';
   }
