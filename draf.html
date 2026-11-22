@@ -336,7 +336,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.8.0-draf.5 (22 Nov 2026)";
+const VER="1.8.0-draf.6 (22 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -785,7 +785,9 @@ const THEMES=[
  {id:"rose",name:"Rose",g:["#a8325e","#e0709a","#cc5583","#7a1f45"],glow:"255,200,220",l:"80,10,40",acc:"#fff1b0",band:"#f2b1cb",s1:"#f6d6e2",s2:"#fbeef3"},
  {id:"arang",name:"Arang",g:["#1f2326","#4a525a","#383e44","#121416"],glow:"170,180,190",l:"0,0,0",acc:"#ffd54a",band:"#d9b95b",s1:"#dcdfe3",s2:"#eff1f3"},
  {id:"coklat",name:"Coklat",g:["#4a2c17","#8d5a34","#744522","#2e1809"],glow:"230,190,150",l:"30,12,0",acc:"#ffe29a",band:"#d8b48a",s1:"#eadccb",s2:"#f6efe6"},
- {id:"laut",name:"Laut",g:["#0a6b78","#18b4c4","#0f95a6","#064650"],glow:"160,240,245",l:"0,50,60",acc:"#fff59d",band:"#86dbe3",s1:"#cdeef1",s2:"#eaf8f9"}
+ {id:"zaitun",name:"Zaitun",g:["#4b5320","#8a9a3b","#6f7e2a","#2f3412"],glow:"215,225,150",l:"25,30,0",acc:"#fff3a0",band:"#c8d38a",s1:"#e3e8c8",s2:"#f3f5e6"},
+ {id:"emas",name:"Emas",g:["#b8860b","#e8c04a","#d4a52a","#8a6208"],glow:"255,235,170",l:"90,60,0",acc:"#2b1a00",band:"#f3dd8f",s1:"#f3e6bf",s2:"#faf5e4"},
+ {id:"nila",name:"Nila",g:["#232a6b","#4a56b8","#3a44a0","#141840"],glow:"170,180,240",l:"10,10,50",acc:"#ffd9a0",band:"#aab3ee",s1:"#d6daf3",s2:"#eceefa"}
 ];
 const TH=()=>THEMES.find(t=>t.id===S.settings.theme)||THEMES[0];
 let lastKind="month";
