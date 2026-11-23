@@ -234,7 +234,7 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
     <div style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink)"><span>Berapa jam sebelum kuliah:</span><input type="number" id="sRemH" min="1" max="24" style="width:80px"></div>
     <button type="button" class="btn sec" id="notiBtn" style="margin-top:8px">Benarkan notifikasi</button> <button type="button" class="btn sec" id="remTest" style="margin-top:8px">Uji peringatan sekarang (draf)</button>
     <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:13px;margin:10px 0 4px"><input type="checkbox" id="sCalOn" style="width:auto"> Masukkan loceng peringatan ke Google Calendar secara automatik</label>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sec" id="calNow">Segerak sekarang</button><span id="calSt" style="font-size:12px;color:var(--mut)"></span></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sec" id="calNow">Sync now</button><span id="calSt" style="font-size:12px;color:var(--mut)"></span></div>
     <p class="note">Notifikasi hanya keluar apabila app sedang dibuka atau berjalan di latar. Untuk loceng yang pasti, guna Menu &gt; Alarm peringatan.</p>
   </div>
   <div id="driveBox" style="display:none;margin-top:14px">
@@ -357,7 +357,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.9.0-draf.5 (23 Nov 2026)";
+const VER="1.9.0-draf.6 (23 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -614,7 +614,7 @@ async function calSync(manual){
       if(new Date(map[id].t)>now){await gCal("/events/"+id,{method:"DELETE"});del++;}else next[id]=map[id];
     }
     calMapSet(next);const m=getMeta();m.cal=Date.now();setMeta(m);
-    if(manual)toast("Kalendar dikemas kini ("+up+" baharu/ubah, "+del+" dibuang)");
+    if(manual)toast("Calendar updated ("+up+" added/changed, "+del+" removed)");
     return {up,del};
   }catch(e){LASTERR="kalendar: "+e.message;if(manual)toast("Gagal: "+e.message);}
   finally{calBusy=false;}
@@ -777,7 +777,7 @@ $("main").onclick=e=>{
 };
 $("main").oninput=e=>{if(e.target.id==="remTxt"){const c=e.target.closest(".mrm");remEdit={date:c.dataset.rd,text:e.target.value};$("remWa").href="https://wa.me/?text="+encodeURIComponent(e.target.value);}};
 $("remTest").onclick=()=>{remForce=true;remHide={};const m=remSent();Object.keys(m).forEach(k=>delete m[k]);try{localStorage.setItem(REMKEY,JSON.stringify(m));localStorage.removeItem(REMKEY+"N");}catch(e){}close("setDlg");lastRemSig="";render();remNotify(remDue());toast("Mod uji: kad peringatan dipaparkan");};
-$("calNow").onclick=async()=>{if(!gEnabled()){toast("Tidak tersedia");return;}toast("Menyegerak ke Google Calendar…");await calSync(true);const mm=getMeta();if(mm.cal)$("calSt").textContent="Terakhir: "+new Date(mm.cal).toLocaleString("ms-MY");};
+$("calNow").onclick=async()=>{if(!gEnabled()){toast("Tidak tersedia");return;}toast("Syncing to Google Calendar…");await calSync(true);const mm=getMeta();if(mm.cal)$("calSt").textContent="Last synced: "+new Date(mm.cal).toLocaleString("ms-MY");};
 $("notiBtn").onclick=async()=>{if(!("Notification" in window)){toast("Peranti tidak menyokong notifikasi");return;}const p=await Notification.requestPermission();toast(p==="granted"?"Notifikasi dibenarkan":"Notifikasi tidak dibenarkan");};
 $("main").onchange=e=>{if(e.target.id==="flK"){FK=e.target.value;render();}else if(e.target.id==="flU"){FU=e.target.value;render();}};
 $("addBtn").onclick=()=>{const t=new Date();openEvent(null,(t.getFullYear()===vy&&t.getMonth()===vm)?toYmd(t):ymd(vy,vm,1));};
@@ -886,7 +886,7 @@ $("bakFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new Fil
 /* ---------- Settings ---------- */
 function openSettings(){
   const s=S.settings;$("sSurau1").value=s.surau1;$("sSurau2").value=s.surau2;$("sTajuk").value=s.tajuk;$("sFootL").value=s.footL;$("sFootR0").value=s.footR0;$("sFootR1").value=s.footR1;$("sFootR2").value=s.footR2;
-  $("sHijri").value=s.hijri;$("sAuto").checked=!!s.autoDrive;$("sRemOn").checked=s.remOn!==false;$("sCalOn").checked=!!s.calOn;{const mm=getMeta();$("calSt").textContent=mm.cal?"Terakhir: "+new Date(mm.cal).toLocaleString("ms-MY"):"Belum disegerakkan";}$("sRemH").value=s.remH||10;$("verInfo").textContent="Versi "+VER;
+  $("sHijri").value=s.hijri;$("sAuto").checked=!!s.autoDrive;$("sRemOn").checked=s.remOn!==false;$("sCalOn").checked=!!s.calOn;{const mm=getMeta();$("calSt").textContent=mm.cal?"Last synced: "+new Date(mm.cal).toLocaleString("ms-MY"):"Not synced yet";}$("sRemH").value=s.remH||10;$("verInfo").textContent="Versi "+VER;
   $("driveBox").style.display=gEnabled()?"block":"none";
   if(gEnabled()){const m=getMeta();$("driveNote").textContent="Salinan jadual disimpan dalam Google Drive anda (fail “"+GFILE+"”)"+(GDRIVE.devEmail?" dan dikongsi, baca sahaja, dengan pembangun app ("+GDRIVE.devEmail+") untuk bantuan jika ada masalah. ":". ")+(m.drive?"Sandaran terakhir: "+new Date(m.drive).toLocaleString("ms-MY")+".":"Belum pernah disandarkan.");}$("devBox").style.display="none";open("setDlg");
 }
