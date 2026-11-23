@@ -355,7 +355,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.9.0-draf.2 (23 Nov 2026)";
+const VER="1.9.0-draf.3 (23 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -555,7 +555,7 @@ function makeIcs(){
     const g={date:k,evs},end=new Date(+rt+15*60000);
     L.push("BEGIN:VEVENT","UID:jk-"+k+"@jadual-kitab","DTSTAMP:"+new Date().toISOString().replace(/[-:]|\.\d+/g,""),"DTSTART:"+icsDT(rt),"DTEND:"+icsDT(end),
       "SUMMARY:"+icsEsc("🔔 Hantar peringatan kuliah: "+evs.map(e=>e.title).join(", ")),
-      "DESCRIPTION:"+icsEsc("Buka app Jadual Kitab dan tekan Hantar ke WhatsApp.\n\n"+remMessage(g,rt)),
+      "DESCRIPTION:"+icsEsc("Buka app: https://shenmui825.github.io/jadual-kitab/ dan tekan Hantar ke WhatsApp. Atau salin mesej di bawah dan tampal ke group.\n\n"+remMessage(g,rt)),
       "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Peringatan kuliah","TRIGGER:PT0S","END:VALARM","END:VEVENT");n++;
   });
   L.push("END:VCALENDAR");
