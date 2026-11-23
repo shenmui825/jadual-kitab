@@ -233,6 +233,8 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
     <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:13px;margin:4px 0"><input type="checkbox" id="sRemOn" style="width:auto"> Tunjuk peringatan untuk dihantar ke group</label>
     <div style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink)"><span>Berapa jam sebelum kuliah:</span><input type="number" id="sRemH" min="1" max="24" style="width:80px"></div>
     <button type="button" class="btn sec" id="notiBtn" style="margin-top:8px">Benarkan notifikasi</button> <button type="button" class="btn sec" id="remTest" style="margin-top:8px">Uji peringatan sekarang (draf)</button>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:13px;margin:10px 0 4px"><input type="checkbox" id="sCalOn" style="width:auto"> Masukkan loceng peringatan ke Google Calendar secara automatik</label>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn sec" id="calNow">Segerak sekarang</button><span id="calSt" style="font-size:12px;color:var(--mut)"></span></div>
     <p class="note">Notifikasi hanya keluar apabila app sedang dibuka atau berjalan di latar. Untuk loceng yang pasti, guna Menu &gt; Alarm peringatan.</p>
   </div>
   <div id="driveBox" style="display:none;margin-top:14px">
@@ -325,7 +327,7 @@ const DEF_SETTINGS={
   surau1:"SURAU AL-IBTIDA'IYAH",surau2:"BATU 6 BANGI",tajuk:"JADUAL PENGAJIAN KITAB",
   footL:"ILMU AMAL IKHLAS",footR0:"Sumbangan boleh disalurkan ke:",footR1:"NO. AKAUN: 12029010014953",footR2:"Pengerusi: 0132280670   SU: 01110842854   Bendahari: 0169969036",
   times:{Subuh:"05:45",Zohor:"13:15",Asar:"16:30",Maghrib:"19:10",Isyak:"20:20","3 Petang":"15:00"},
-  hijri:0,view:"",autoDrive:false,remOn:true,remH:10
+  hijri:0,view:"",autoDrive:false,remOn:true,remH:10,calOn:false
 };
 const WAKTU=["Subuh","Zohor","Asar","Maghrib","Isyak","3 Petang"];
 const SWATCH=["#012060","#385723","#70309e","#d8068b","#06b1f6","#92d14f","#fed966","#fffe00","#c0392b","#e67e22","#16a085","#555555"];
@@ -355,29 +357,31 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.9.0-draf.4 (23 Nov 2026)";
+const VER="1.9.0-draf.5 (23 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
 function getMeta(){try{return JSON.parse(localStorage.getItem(KEY+"Meta")||"{}");}catch(e){return {};}}
 function setMeta(m){try{localStorage.setItem(KEY+"Meta",JSON.stringify(m));}catch(e){}}
 function markBackup(){const m=getMeta();m.backup=Date.now();setMeta(m);render();}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}const m=getMeta();m.changed=Date.now();if(!m.first)m.first=m.changed;setMeta(m);autoBackupSoon();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}const m=getMeta();m.changed=Date.now();if(!m.first)m.first=m.changed;setMeta(m);autoBackupSoon();calSyncSoon();}
 /* ---------- Sandaran Google Drive ----------
    Pembangun: isi clientId (dan e-mel sendiri untuk dikongsi, baca sahaja). Jika clientId kosong, ciri ini disembunyikan. */
 const GDRIVE={clientId:"1081778761403-q46ueakjdn44odl0bia7mks93a6cl4jn.apps.googleusercontent.com",devEmail:"shenmuius@gmail.com"};
 const GFILE="Jadual Kitab - Sandaran (draf).json";
-let gTok=null,gTokExp=0;
+const GDRV="https://www.googleapis.com/auth/drive.file",GCALSC="https://www.googleapis.com/auth/calendar.events";
+let gToks={};
 const gEnabled=()=>!!GDRIVE.clientId;
 function loadGis(){return new Promise((res,rej)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return res();const sc=document.createElement("script");sc.src="https://accounts.google.com/gsi/client";sc.onload=()=>res();sc.onerror=()=>rej(new Error("Tiada sambungan internet"));document.head.appendChild(sc);});}
-async function gToken(){
-  if(gTok&&Date.now()<gTokExp-60000)return gTok;
+async function gToken(scope){
+  scope=scope||GDRV;const c=gToks[scope];
+  if(c&&Date.now()<c.exp-60000)return c.t;
   await loadGis();
   return new Promise((res,rej)=>{
-    const c=google.accounts.oauth2.initTokenClient({client_id:GDRIVE.clientId,scope:"https://www.googleapis.com/auth/drive.file",
-      callback:r=>{if(r.error)return rej(new Error(r.error));gTok=r.access_token;gTokExp=Date.now()+(+r.expires_in||3600)*1000;res(gTok);},
+    const cl=google.accounts.oauth2.initTokenClient({client_id:GDRIVE.clientId,scope:scope,
+      callback:r=>{if(r.error)return rej(new Error(r.error));gToks[scope]={t:r.access_token,exp:Date.now()+(+r.expires_in||3600)*1000};res(r.access_token);},
       error_callback:e=>rej(new Error((e&&e.type)||"log masuk dibatalkan"))});
-    c.requestAccessToken({prompt:""});
+    cl.requestAccessToken({prompt:""});
   });
 }
 async function gApi(url,opt){
@@ -567,6 +571,55 @@ function makeIcs(){
   if(!n){toast("Tiada peringatan akan datang bagi bulan ini");return;}
   download("peringatan-"+monKey()+".ics",new Blob([L.join("\r\n")],{type:"text/calendar"}));toast(n+" peringatan dijana");
 }
+/* ---------- Segerak ke Google Calendar ---------- */
+const CALPFX="jkd",CALTZ="Asia/Kuala_Lumpur",APPURL="https://shenmui825.github.io/jadual-kitab/";
+let calBusy=false,calT=null;
+const calMapGet=()=>{try{return JSON.parse(localStorage.getItem(KEY+"CalMap")||"{}");}catch(e){return{};}};
+const calMapSet=m=>{try{localStorage.setItem(KEY+"CalMap",JSON.stringify(m));}catch(e){}};
+async function gCal(path,opt){
+  const t=await gToken(GCALSC);opt=opt||{};opt.headers=Object.assign({Authorization:"Bearer "+t,"Content-Type":"application/json"},opt.headers||{});
+  const r=await fetch("https://www.googleapis.com/calendar/v3/calendars/primary"+path,opt);
+  if(!r.ok&&![404,409,410].includes(r.status)){const tx=await r.text();throw new Error(/has not been used|disabled/i.test(tx)?"API Kalendar belum dihidupkan oleh pembangun":"Kalendar "+r.status+" "+tx.slice(0,80));}
+  return r;
+}
+const ldt=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes())+":00";
+function calWanted(){
+  const out={},now=nowT(),today0=new Date(now.getFullYear(),now.getMonth(),now.getDate()),lim=new Date(+today0+60*86400000),map=byDate();
+  const mk=(id,when,sum,desc)=>({id,summary:sum,description:desc,start:{dateTime:ldt(when),timeZone:CALTZ},end:{dateTime:ldt(new Date(+when+15*60000)),timeZone:CALTZ},reminders:{useDefault:false,overrides:[{method:"popup",minutes:0}]},extendedProperties:{private:{jk:"1"}}});
+  Object.keys(map).sort().forEach(k=>{
+    const d=parse(k);if(d<today0||d>lim)return;
+    const evs=map[k].filter(e=>!e.cancelled).sort(byStart);if(!evs.length)return;
+    const rt=new Date(Math.min(...evs.map(remTime)));if(rt<=now)return;
+    const g={date:k,evs},names=evs.map(e=>e.title).join(", "),id0=CALPFX+k.replace(/-/g,"");
+    out[id0+"r"]=mk(id0+"r",rt,"🔔 Hantar peringatan kuliah: "+names,"Buka app: "+APPURL+" dan tekan Hantar ke WhatsApp. Atau salin mesej di bawah.\n\n"+remMessage(g,rt));
+    const fm=hmin(startOf(evs[0]))-180,ft=new Date(d.getFullYear(),d.getMonth(),d.getDate(),Math.floor(fm/60),fm%60);
+    if(fm>0&&ft>new Date(+rt+30*60000)&&ft>now)out[id0+"s"]=mk(id0+"s",ft,"⏰ Susulan: sudah hantar peringatan kuliah? "+names,"Abaikan jika sudah dihantar. Buka app: "+APPURL+"\n\n"+remMessage(g,rt));
+  });
+  return out;
+}
+async function calSync(manual){
+  if(calBusy)return;calBusy=true;
+  try{
+    const want=calWanted(),map=calMapGet(),now=nowT(),next={};let up=0,del=0;
+    for(const id of Object.keys(want)){
+      const b=want[id],h=JSON.stringify([b.summary,b.description,b.start.dateTime]);
+      if(map[id]&&map[id].h===h){next[id]=map[id];continue;}
+      let r=await gCal("/events/"+id,{method:"PUT",body:JSON.stringify(b)});
+      if(r.status===404){r=await gCal("/events",{method:"POST",body:JSON.stringify(b)});if(r.status===409)r=await gCal("/events/"+id,{method:"PUT",body:JSON.stringify(b)});}
+      if(!r.ok)throw new Error("Kalendar "+r.status);
+      next[id]={h,t:b.start.dateTime};up++;
+    }
+    for(const id of Object.keys(map)){
+      if(want[id])continue;
+      if(new Date(map[id].t)>now){await gCal("/events/"+id,{method:"DELETE"});del++;}else next[id]=map[id];
+    }
+    calMapSet(next);const m=getMeta();m.cal=Date.now();setMeta(m);
+    if(manual)toast("Kalendar dikemas kini ("+up+" baharu/ubah, "+del+" dibuang)");
+    return {up,del};
+  }catch(e){LASTERR="kalendar: "+e.message;if(manual)toast("Gagal: "+e.message);}
+  finally{calBusy=false;}
+}
+function calSyncSoon(){if(!gEnabled()||!S.settings.calOn)return;clearTimeout(calT);calT=setTimeout(()=>calSync(false),20000);}
 function reminderBar(){
   if(remOff)return "";
   const t=nowD(),y=t.getFullYear(),m=t.getMonth(),dim=new Date(y,m+1,0).getDate();
@@ -724,6 +777,7 @@ $("main").onclick=e=>{
 };
 $("main").oninput=e=>{if(e.target.id==="remTxt"){const c=e.target.closest(".mrm");remEdit={date:c.dataset.rd,text:e.target.value};$("remWa").href="https://wa.me/?text="+encodeURIComponent(e.target.value);}};
 $("remTest").onclick=()=>{remForce=true;remHide={};const m=remSent();Object.keys(m).forEach(k=>delete m[k]);try{localStorage.setItem(REMKEY,JSON.stringify(m));localStorage.removeItem(REMKEY+"N");}catch(e){}close("setDlg");lastRemSig="";render();remNotify(remDue());toast("Mod uji: kad peringatan dipaparkan");};
+$("calNow").onclick=async()=>{if(!gEnabled()){toast("Tidak tersedia");return;}toast("Menyegerak ke Google Calendar…");await calSync(true);const mm=getMeta();if(mm.cal)$("calSt").textContent="Terakhir: "+new Date(mm.cal).toLocaleString("ms-MY");};
 $("notiBtn").onclick=async()=>{if(!("Notification" in window)){toast("Peranti tidak menyokong notifikasi");return;}const p=await Notification.requestPermission();toast(p==="granted"?"Notifikasi dibenarkan":"Notifikasi tidak dibenarkan");};
 $("main").onchange=e=>{if(e.target.id==="flK"){FK=e.target.value;render();}else if(e.target.id==="flU"){FU=e.target.value;render();}};
 $("addBtn").onclick=()=>{const t=new Date();openEvent(null,(t.getFullYear()===vy&&t.getMonth()===vm)?toYmd(t):ymd(vy,vm,1));};
@@ -832,14 +886,14 @@ $("bakFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new Fil
 /* ---------- Settings ---------- */
 function openSettings(){
   const s=S.settings;$("sSurau1").value=s.surau1;$("sSurau2").value=s.surau2;$("sTajuk").value=s.tajuk;$("sFootL").value=s.footL;$("sFootR0").value=s.footR0;$("sFootR1").value=s.footR1;$("sFootR2").value=s.footR2;
-  $("sHijri").value=s.hijri;$("sAuto").checked=!!s.autoDrive;$("sRemOn").checked=s.remOn!==false;$("sRemH").value=s.remH||10;$("verInfo").textContent="Versi "+VER;
+  $("sHijri").value=s.hijri;$("sAuto").checked=!!s.autoDrive;$("sRemOn").checked=s.remOn!==false;$("sCalOn").checked=!!s.calOn;{const mm=getMeta();$("calSt").textContent=mm.cal?"Terakhir: "+new Date(mm.cal).toLocaleString("ms-MY"):"Belum disegerakkan";}$("sRemH").value=s.remH||10;$("verInfo").textContent="Versi "+VER;
   $("driveBox").style.display=gEnabled()?"block":"none";
   if(gEnabled()){const m=getMeta();$("driveNote").textContent="Salinan jadual disimpan dalam Google Drive anda (fail “"+GFILE+"”)"+(GDRIVE.devEmail?" dan dikongsi, baca sahaja, dengan pembangun app ("+GDRIVE.devEmail+") untuk bantuan jika ada masalah. ":". ")+(m.drive?"Sandaran terakhir: "+new Date(m.drive).toLocaleString("ms-MY")+".":"Belum pernah disandarkan.");}$("devBox").style.display="none";open("setDlg");
 }
 $("setSave").onclick=()=>{$("devBox").style.display="none";
   const s=S.settings;s.surau1=$("sSurau1").value;s.surau2=$("sSurau2").value;s.tajuk=$("sTajuk").value||DEF_SETTINGS.tajuk;s.footL=$("sFootL").value;s.footR0=$("sFootR0").value;s.footR1=$("sFootR1").value;s.footR2=$("sFootR2").value;
-  s.hijri=+$("sHijri").value||0;s.remOn=$("sRemOn").checked;s.remH=Math.min(24,Math.max(1,+$("sRemH").value||10));const wasAuto=!!s.autoDrive;s.autoDrive=$("sAuto").checked&&gEnabled();
-  save();close("setDlg");render();toast("Tetapan disimpan");if(s.autoDrive&&!wasAuto)driveBackupNow();
+  s.hijri=+$("sHijri").value||0;s.remOn=$("sRemOn").checked;s.remH=Math.min(24,Math.max(1,+$("sRemH").value||10));const wasCal=!!s.calOn;s.calOn=$("sCalOn").checked&&gEnabled();const wasAuto=!!s.autoDrive;s.autoDrive=$("sAuto").checked&&gEnabled();
+  save();close("setDlg");render();toast("Tetapan disimpan");if(s.autoDrive&&!wasAuto)driveBackupNow();if(s.calOn&&!wasCal)calSync(true);
 };
 $("setCancel").onclick=()=>close("setDlg");
 function infoText(){
@@ -1100,7 +1154,7 @@ window.addEventListener("resize",()=>{if(!S.settings.view)render();});
 (function(){const k=vy+"-"+pad(vm+1)+"-";if(!S.events.some(e=>e.date.startsWith(k))&&S.events.length){const ds=S.events.map(e=>e.date).sort();const t=toYmd(new Date());const pick=ds.find(d=>d>=t)||ds[ds.length-1];const p=parse(pick);vy=p.getFullYear();vm=p.getMonth();}})();
 render();
 if(drivePending())autoBackupSoon();
-setInterval(remTick,60000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)remTick();});setTimeout(remTick,1500);
+setInterval(remTick,60000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)remTick();});setTimeout(remTick,1500);if(S.settings.calOn)setTimeout(calSyncSoon,3000);
 
 /* semakan versi baru */
 (function(){
