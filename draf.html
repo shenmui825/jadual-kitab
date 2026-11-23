@@ -232,7 +232,7 @@ textarea.code{font-family:monospace;font-size:11px;height:140px}
     <label>Peringatan mesra (WhatsApp)</label>
     <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:13px;margin:4px 0"><input type="checkbox" id="sRemOn" style="width:auto"> Tunjuk peringatan untuk dihantar ke group</label>
     <div style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink)"><span>Berapa jam sebelum kuliah:</span><input type="number" id="sRemH" min="1" max="24" style="width:80px"></div>
-    <button type="button" class="btn sec" id="notiBtn" style="margin-top:8px">Benarkan notifikasi</button>
+    <button type="button" class="btn sec" id="notiBtn" style="margin-top:8px">Benarkan notifikasi</button> <button type="button" class="btn sec" id="remTest" style="margin-top:8px">Uji peringatan sekarang (draf)</button>
     <p class="note">Notifikasi hanya keluar apabila app sedang dibuka atau berjalan di latar. Untuk loceng yang pasti, guna Menu &gt; Alarm peringatan.</p>
   </div>
   <div id="driveBox" style="display:none;margin-top:14px">
@@ -355,7 +355,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return ensureCatalog({events:o.events||[],catalog:o.catalog,notes:o.notes,special:o.special,settings:Object.assign({},DEF_SETTINGS,o.settings,{times:Object.assign({},DEF_SETTINGS.times,(o.settings||{}).times)})});}}catch(e){}
   return ensureCatalog({events:JSON.parse(JSON.stringify(SEED_EVENTS)),settings:JSON.parse(JSON.stringify(DEF_SETTINGS))});
 }
-const VER="1.9.0-draf (23 Nov 2026)";
+const VER="1.9.0-draf.2 (23 Nov 2026)";
 let LASTERR="tiada",PERSIST="tidak diketahui";
 window.addEventListener("error",e=>{LASTERR=(e.message||"ralat")+" @baris "+(e.lineno||"?");});
 window.addEventListener("unhandledrejection",e=>{LASTERR="promise: "+((e.reason&&e.reason.message)||e.reason||"?");});
@@ -496,7 +496,7 @@ function filterBar(){
   return '<div class="flt"><select id="flK">'+opt(c.kitab.map(k=>k.title),FK,"Semua kitab")+'</select><select id="flU">'+opt(c.ustaz,FU,"Semua ustaz")+'</select>'+((FK||FU)?'<button id="flX">Kosongkan</button><small>Penapis hanya untuk paparan. Gambar jadual tidak terjejas.</small>':'')+'</div>';
 }
 const REMKEY=KEY+"Rem";
-let remEdit=null,remHide={},lastRemSig="";
+let remEdit=null,remHide={},lastRemSig="",remForce=false;
 function remSent(){try{return JSON.parse(localStorage.getItem(REMKEY)||"{}");}catch(e){return{};}}
 function remMark(d){const m=remSent();m[d]=Date.now();try{localStorage.setItem(REMKEY,JSON.stringify(m));}catch(e){}}
 const hmin=t=>{const a=(t||"20:00").split(":").map(Number);return a[0]*60+(a[1]||0);};
@@ -510,6 +510,7 @@ const byStart=(a,b)=>startOf(a).localeCompare(startOf(b));
 function remDue(){
   if(S.settings.remOn===false)return null;
   const now=nowT(),t0=toYmd(now),t1=toYmd(new Date(now.getFullYear(),now.getMonth(),now.getDate()+1)),map=byDate();
+  if(remForce){const k=Object.keys(map).filter(x=>x>=t0&&map[x].some(e=>!e.cancelled)).sort()[0];if(k){const evs=map[k].filter(e=>!e.cancelled).sort(byStart);return {date:k,evs,rt:now};}}
   for(const k of [t0,t1]){
     const evs=(map[k]||[]).filter(e=>!e.cancelled).sort(byStart);if(!evs.length)continue;
     const rt=new Date(Math.min(...evs.map(remTime))),d=parse(k),sm=hmin(startOf(evs[evs.length-1]))+90;
@@ -717,6 +718,7 @@ $("main").onclick=e=>{
   if(cell)openEvent(null,cell.dataset.date);
 };
 $("main").oninput=e=>{if(e.target.id==="remTxt"){const c=e.target.closest(".mrm");remEdit={date:c.dataset.rd,text:e.target.value};$("remWa").href="https://wa.me/?text="+encodeURIComponent(e.target.value);}};
+$("remTest").onclick=()=>{remForce=true;remHide={};const m=remSent();Object.keys(m).forEach(k=>delete m[k]);try{localStorage.setItem(REMKEY,JSON.stringify(m));localStorage.removeItem(REMKEY+"N");}catch(e){}close("setDlg");lastRemSig="";render();remNotify(remDue());toast("Mod uji: kad peringatan dipaparkan");};
 $("notiBtn").onclick=async()=>{if(!("Notification" in window)){toast("Peranti tidak menyokong notifikasi");return;}const p=await Notification.requestPermission();toast(p==="granted"?"Notifikasi dibenarkan":"Notifikasi tidak dibenarkan");};
 $("main").onchange=e=>{if(e.target.id==="flK"){FK=e.target.value;render();}else if(e.target.id==="flU"){FU=e.target.value;render();}};
 $("addBtn").onclick=()=>{const t=new Date();openEvent(null,(t.getFullYear()===vy&&t.getMonth()===vm)?toYmd(t):ymd(vy,vm,1));};
